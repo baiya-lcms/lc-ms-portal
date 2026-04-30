@@ -1577,7 +1577,14 @@ async function initDashboard(){
     const ttSnap = await fbDB.ref('lcms/timetable').get();
     if(ttSnap.exists()) ttTasks = ttSnap.val();
     const wbSnap = await fbDB.ref('lcms/wbcards').get();
-    if(wbSnap.exists()) wbCards = wbSnap.val();
+    if(wbSnap.exists()){
+      wbCards = wbSnap.val();
+      // Migrate old cards without week
+      const currentWeek = isoDate(weekMonday(new Date()));
+      let migrated = false;
+      (wbCards||[]).forEach(c=>{ if(!c.week){ c.week=currentWeek; migrated=true; } });
+      if(migrated){ saveWbCards(); }
+    }
   } catch(e){}
   document.getElementById('asof').textContent = `Connected to Firebase · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
   buildYearPills('yearPills', y=>{activeYear=y; renderProjTable();});
@@ -2886,7 +2893,16 @@ let wbCards = null;
 let wbEditingId = null;
 let wbSelectedUsers = [];
 
-function loadWbCards(){ const s=localStorage.getItem('lcms_wb'); return s?JSON.parse(s):[]; }
+function loadWbCards(){ 
+  const s=localStorage.getItem('lcms_wb'); 
+  const cards = s?JSON.parse(s):[];
+  // Migrate old cards without week — assign to current week
+  const currentWeek = isoDate(weekMonday(new Date()));
+  let migrated = false;
+  cards.forEach(c=>{ if(!c.week){ c.week=currentWeek; migrated=true; } });
+  if(migrated) localStorage.setItem('lcms_wb', JSON.stringify(cards));
+  return cards;
+}
 function saveWbCards(){ localStorage.setItem('lcms_wb', JSON.stringify(wbCards)); fbSave('wbcards', wbCards); }
 
 function getUserColorIdx(name){
@@ -2896,10 +2912,14 @@ function getUserColorIdx(name){
 
 function renderWorkBoard(){
   if(!wbCards) wbCards = loadWbCards();
+  // ── Migrate old cards that have no week property ──
+  const weekKey = ttWeekStart ? isoDate(ttWeekStart) : isoDate(weekMonday(new Date()));
+  let migrated = false;
+  wbCards.forEach(c=>{ if(!c.week){ c.week = weekKey; migrated = true; } });
+  if(migrated) saveWbCards();
   const grid = document.getElementById('wbGrid');
   if(!grid) return;
   grid.innerHTML = WB_COLS.map(col=>{
-    const weekKey = ttWeekStart ? isoDate(ttWeekStart) : isoDate(weekMonday(new Date()));
     const cards = wbCards.filter(c=>c.col===col.id && c.week===weekKey);
     return `<div class="wb-col" style="background:${col.bg};border:1px solid ${col.border}" data-col="${col.id}" ondragover="wbDragOver(event)" ondrop="wbDrop(event,'${col.id}')" ondragleave="wbDragLeave(event)">
       <div class="wb-col-hdr" style="border-color:${col.hdrBorder}">
