@@ -1176,7 +1176,10 @@ function loadUsers(){
   }
   return JSON.parse(JSON.stringify(DEFAULT_USERS));
 }
-function saveUsers(u){ localStorage.setItem('lcms_users',JSON.stringify(u)); }
+function saveUsers(u){ 
+  localStorage.setItem('lcms_users',JSON.stringify(u)); 
+  fbSave('users', u);
+}
 
 // ── FIREBASE AUTH HELPER ──────────────────────────────────────────────────
 // Each dashboard user gets a Firebase Auth account using a synthetic email
@@ -1219,6 +1222,9 @@ function doLogin(){
     // Wait for Firebase Auth before loading data
     fbSignIn(u, p).then(()=>{
       console.log('Firebase currentUser after login:', fbAuth.currentUser?.email);
+      // Push local users to Firebase so other devices can access them
+      const users = loadUsers();
+      fbSave('users', users);
       initDashboard();
     });
   } else {
@@ -1338,7 +1344,13 @@ let D = {};
 
 // ── FIREBASE SAVE/LOAD ────────────────────────────────────────────────────
 function fbSave(key, data){
-  fbDB.ref('lcms/' + key).set(data).catch(e => console.error('Firebase save error:', key, e));
+  if(!fbAuth.currentUser){ 
+    console.warn('fbSave skipped — not authenticated:', key);
+    return;
+  }
+  fbDB.ref('lcms/' + key).set(data)
+    .then(()=> console.log('Firebase saved:', key))
+    .catch(e => console.error('Firebase save error:', key, e.code, e.message));
 }
 function saveD(){
   // Keep localStorage as cache for instant load
@@ -1362,6 +1374,10 @@ async function loadFromFirebase(){
     const snap = await fbDB.ref('lcms').get();
     if(snap.exists()){
       const fb = snap.val();
+      // Sync users from Firebase to localStorage
+      if(fb.users && fb.users.length > 0){
+        localStorage.setItem('lcms_users', JSON.stringify(fb.users));
+      }
       return {
         clients:  fb.clients  || JSON.parse(JSON.stringify(SD_CLIENTS)),
         projects: fb.projects || JSON.parse(JSON.stringify(SD_PROJECTS)),
