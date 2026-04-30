@@ -1370,14 +1370,27 @@ function saveD(){
 }
 
 async function loadFromFirebase(){
+  // Wait for Firebase Auth state to resolve
+  await new Promise(resolve => {
+    const unsub = fbAuth.onAuthStateChanged(user => { unsub(); resolve(user); });
+  });
+
+  if(!fbAuth.currentUser){
+    console.warn('loadFromFirebase: not authenticated, using local cache');
+    return localFallback();
+  }
+
   try {
+    console.log('loadFromFirebase: reading from Firebase...');
     const snap = await fbDB.ref('lcms').get();
     if(snap.exists()){
       const fb = snap.val();
-      // Sync users from Firebase to localStorage
-      if(fb.users && fb.users.length > 0){
-        localStorage.setItem('lcms_users', JSON.stringify(fb.users));
-      }
+      console.log('loadFromFirebase: projects:', fb.projects?.length, 'users:', fb.users?.length);
+      if(fb.users && fb.users.length > 0) localStorage.setItem('lcms_users', JSON.stringify(fb.users));
+      if(fb.projects) localStorage.setItem('lcms_projects', JSON.stringify(fb.projects));
+      if(fb.clients)  localStorage.setItem('lcms_clients',  JSON.stringify(fb.clients));
+      if(fb.fin)      localStorage.setItem('lcms_fin',      JSON.stringify(fb.fin));
+      if(fb.inq2)     localStorage.setItem('lcms_inq2',     JSON.stringify(fb.inq2));
       return {
         clients:  fb.clients  || JSON.parse(JSON.stringify(SD_CLIENTS)),
         projects: fb.projects || JSON.parse(JSON.stringify(SD_PROJECTS)),
@@ -1387,8 +1400,11 @@ async function loadFromFirebase(){
         inq2:     fb.inq2     || [],
       };
     }
-  } catch(e){ console.warn('Firebase load failed, using local cache:', e); }
-  // Fallback to localStorage
+  } catch(e){ console.error('Firebase load failed:', e.code, e.message); }
+  return localFallback();
+}
+
+function localFallback(){
   return {
     clients:  localStorage.getItem('lcms_clients')  ? JSON.parse(localStorage.getItem('lcms_clients'))  : JSON.parse(JSON.stringify(SD_CLIENTS)),
     projects: localStorage.getItem('lcms_projects') ? JSON.parse(localStorage.getItem('lcms_projects')) : JSON.parse(JSON.stringify(SD_PROJECTS)),
@@ -1398,7 +1414,6 @@ async function loadFromFirebase(){
     inq2:     localStorage.getItem('lcms_inq2')     ? JSON.parse(localStorage.getItem('lcms_inq2'))     : [],
   };
 }
-
 // ── EXCEL IMPORT — WORK STATUS ────────────────────────────────────────────
 function handleWorkStatusImport(input){
   const file = input.files[0]; if(!file) return;
