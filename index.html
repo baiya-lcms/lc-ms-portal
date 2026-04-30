@@ -1386,7 +1386,19 @@ async function loadFromFirebase(){
     if(snap.exists()){
       const fb = snap.val();
       console.log('loadFromFirebase: projects:', fb.projects?.length, 'users:', fb.users?.length);
-      if(fb.users && fb.users.length > 0) localStorage.setItem('lcms_users', JSON.stringify(fb.users));
+      // Smart user merge: combine Firebase users + local users, Firebase wins on conflicts
+      if(fb.users && fb.users.length > 0){
+        const localUsers = localStorage.getItem('lcms_users') ? JSON.parse(localStorage.getItem('lcms_users')) : [];
+        const merged = [...fb.users];
+        localUsers.forEach(lu => { if(!merged.find(u=>u.username===lu.username)) merged.push(lu); });
+        localStorage.setItem('lcms_users', JSON.stringify(merged));
+        // Push merged list back to Firebase so all devices get all users
+        fbDB.ref('lcms/users').set(merged).catch(e=>console.warn('users sync failed:', e));
+      } else {
+        // Firebase has no users yet - push local users up
+        const localUsers = localStorage.getItem('lcms_users') ? JSON.parse(localStorage.getItem('lcms_users')) : [];
+        if(localUsers.length > 0) fbDB.ref('lcms/users').set(localUsers).catch(e=>console.warn('users push failed:', e));
+      }
       if(fb.projects) localStorage.setItem('lcms_projects', JSON.stringify(fb.projects));
       if(fb.clients)  localStorage.setItem('lcms_clients',  JSON.stringify(fb.clients));
       if(fb.fin)      localStorage.setItem('lcms_fin',      JSON.stringify(fb.fin));
@@ -1614,17 +1626,18 @@ async function initDashboard(){
   // Also load timetable & board from Firebase
   try {
     const ttSnap = await fbDB.ref('lcms/timetable').get();
-    if(ttSnap.exists()) ttTasks = ttSnap.val();
+    if(ttSnap.exists()){ ttTasks = ttSnap.val(); console.log('Timetable loaded:', ttTasks?.length, 'tasks'); }
+    else { console.warn('No timetable data in Firebase'); ttTasks = loadTTTasks(); }
     const wbSnap = await fbDB.ref('lcms/wbcards').get();
     if(wbSnap.exists()){
       wbCards = wbSnap.val();
-      // Migrate old cards without week
+      console.log('WB cards loaded:', wbCards?.length, 'cards');
       const currentWeek = isoDate(weekMonday(new Date()));
       let migrated = false;
       (wbCards||[]).forEach(c=>{ if(!c.week){ c.week=currentWeek; migrated=true; } });
       if(migrated){ saveWbCards(); }
-    }
-  } catch(e){}
+    } else { console.warn('No wbcards in Firebase'); wbCards = loadWbCards(); }
+  } catch(e){ console.error('Firebase timetable/wb load error:', e.code, e.message); ttTasks = loadTTTasks(); wbCards = loadWbCards(); }
   document.getElementById('asof').textContent = `Connected to Firebase · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
   buildYearPills('yearPills', y=>{activeYear=y; renderProjTable();});
   buildYearPills('stYearPills', y=>{activeYear=y; renderStatusGroups();});
