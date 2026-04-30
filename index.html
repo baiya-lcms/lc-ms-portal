@@ -1187,13 +1187,17 @@ async function fbSignIn(username, password){
   const email = fbEmail(username);
   try {
     await fbAuth.signInWithEmailAndPassword(email, password);
+    console.log('Firebase Auth: signed in as', email);
   } catch(e){
-    if(e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential'){
-      // Auto-create the Firebase Auth account on first login
-      try {
-        await fbAuth.createUserWithEmailAndPassword(email, password);
-      } catch(e2){ console.warn('Firebase Auth create failed:', e2.message); }
-    } else { console.warn('Firebase Auth sign-in failed:', e.message); }
+    // On ANY sign-in failure, try to create the account
+    console.warn('Firebase Auth sign-in failed:', e.code, '— trying to create account');
+    try {
+      await fbAuth.createUserWithEmailAndPassword(email, password);
+      console.log('Firebase Auth: account created for', email);
+    } catch(e2){
+      // If creation fails because account exists with different password, just warn
+      console.warn('Firebase Auth create failed:', e2.code, e2.message);
+    }
   }
 }
 
@@ -1212,8 +1216,11 @@ function doLogin(){
     sessionStorage.setItem('lcms_session',JSON.stringify(found));
     document.getElementById('loginOv').style.display='none';
     applyRole(found.role);
-    // Silently sign in to Firebase Auth so database rules pass
-    fbSignIn(u, p).then(()=>initDashboard());
+    // Wait for Firebase Auth before loading data
+    fbSignIn(u, p).then(()=>{
+      console.log('Firebase currentUser after login:', fbAuth.currentUser?.email);
+      initDashboard();
+    });
   } else {
     err.textContent='Invalid username or password';
     document.getElementById('luPass').value='';
@@ -1230,7 +1237,7 @@ function doLogout(){
   document.getElementById('loginErr').textContent='';
   fbSignOut();
 }
-function checkAuth(){
+async function checkAuth(){
   const sess=sessionStorage.getItem('lcms_session');
   if(sess){
     const saved=JSON.parse(sess);
@@ -1239,8 +1246,9 @@ function checkAuth(){
     sessionStorage.setItem('lcms_session',JSON.stringify(fresh));
     document.getElementById('loginOv').style.display='none';
     applyRole(fresh.role);
-    // Re-authenticate with Firebase Auth on page reload
-    fbSignIn(fresh.username, fresh.password||saved.password||'');
+    // Wait for Firebase Auth before loading data
+    await fbSignIn(fresh.username, fresh.password||saved.password||'');
+    console.log('Firebase currentUser after checkAuth:', fbAuth.currentUser?.email);
     return true;
   }
   return false;
@@ -1612,8 +1620,9 @@ async function initDashboard(){
   }
 }
 
-window.addEventListener('DOMContentLoaded', ()=>{
-  if(checkAuth()){
+window.addEventListener('DOMContentLoaded', async ()=>{
+  const authed = await checkAuth();
+  if(authed){
     initDashboard();
   }
   // Otherwise login overlay is visible — initDashboard called after doLogin()
