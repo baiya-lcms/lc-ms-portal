@@ -2900,7 +2900,7 @@ function renderWorkBoard(){
   if(!grid) return;
   grid.innerHTML = WB_COLS.map(col=>{
     const weekKey = ttWeekStart ? isoDate(ttWeekStart) : isoDate(weekMonday(new Date()));
-    const cards = wbCards.filter(c=>c.col===col.id && (c.week===weekKey || !c.week));
+    const cards = wbCards.filter(c=>c.col===col.id && c.week===weekKey);
     return `<div class="wb-col" style="background:${col.bg};border:1px solid ${col.border}" data-col="${col.id}" ondragover="wbDragOver(event)" ondrop="wbDrop(event,'${col.id}')" ondragleave="wbDragLeave(event)">
       <div class="wb-col-hdr" style="border-color:${col.hdrBorder}">
         <div class="wb-title" style="color:${col.color}">${col.label}</div>
@@ -3012,6 +3012,43 @@ function delWbCard(id){
 }
 
 
+
+// ── TIMETABLE DRAG ACROSS DAYS ────────────────────────────────────────────
+let ttDragTaskId = null;
+function ttDragStart(e, taskId){
+  ttDragTaskId = taskId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.4';
+  e.stopPropagation();
+}
+function ttDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.style.background = 'rgba(46,117,182,.12)';
+  e.currentTarget.style.outline = '2px dashed #2E75B6';
+}
+function ttDragLeave(e){
+  e.currentTarget.style.background = '';
+  e.currentTarget.style.outline = '';
+}
+function ttDrop(e, newPerson, newDate){
+  e.preventDefault();
+  e.currentTarget.style.background = '';
+  e.currentTarget.style.outline = '';
+  if(!ttDragTaskId) return;
+  const task = ttTasks.find(t=>t.id===ttDragTaskId);
+  if(task){
+    const changed = task.person!==newPerson || task.date!==newDate;
+    if(changed){
+      task.person = newPerson;
+      task.date   = newDate;
+      saveTTTasks();
+      renderTimetable();
+      toast('Task moved ✓');
+    }
+  }
+  ttDragTaskId = null;
+}
 // ── WORKBOARD DRAG & DROP ────────────────────────────────────────────────
 let wbDragId = null;
 function wbDragStart(e, id){
@@ -3170,11 +3207,13 @@ function renderTimetable(){
           }).filter(Boolean).join('')+'</div>';
         }
         const editAttr = canAddEdit ? `onclick="editTTTask(${t.id})" title="Click to edit"` : `style="cursor:default"`;
-        return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}" ${editAttr}>${t.desc||''}${projTags}</span>`;
+        const dragAttrs = canAddEdit ? `draggable="true" ondragstart="ttDragStart(event,${t.id})" ondragend="this.style.opacity='1'"` : '';
+        return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}" ${editAttr} ${dragAttrs}>${t.desc||''}${projTags}</span>`;
       }).join('');
       if(canAddEdit) chips += `<span class="tt-add-btn" onclick="openTTModal('${row.id}','${ds}')" title="Add task">＋</span>`;
 
-      html += `<td class="${cellCls}">${chips}</td>`;
+      const dropAttrs = canAddEdit ? `ondragover="ttDragOver(event)" ondrop="ttDrop(event,'${row.id}','${ds}')" ondragleave="ttDragLeave(event)"` : '';
+      html += `<td class="${cellCls}" ${dropAttrs}>${chips}</td>`;
     });
 
     html += `</tr>`;
