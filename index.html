@@ -1213,24 +1213,39 @@ function doLogin(){
   const p=document.getElementById('luPass').value;
   const err=document.getElementById('loginErr');
   if(!u||!p){err.textContent='Please enter username and password';return;}
-  const found=loadUsers().find(x=>x.username===u&&x.password===p);
-  if(found){
-    currentUser=found;
-    sessionStorage.setItem('lcms_session',JSON.stringify(found));
-    document.getElementById('loginOv').style.display='none';
-    applyRole(found.role);
-    // Wait for Firebase Auth before loading data
-    fbSignIn(u, p).then(()=>{
-      console.log('Firebase currentUser after login:', fbAuth.currentUser?.email);
-      // Push local users to Firebase so other devices can access them
-      const users = loadUsers();
-      fbSave('users', users);
-      initDashboard();
-    });
-  } else {
-    err.textContent='Invalid username or password';
-    document.getElementById('luPass').value='';
-  }
+  
+  // Fetch latest users from Firebase first, then check credentials
+  const attemptLogin = (users) => {
+    const found=users.find(x=>x.username===u&&x.password===p);
+    if(found){
+      currentUser=found;
+      sessionStorage.setItem('lcms_session',JSON.stringify(found));
+      document.getElementById('loginOv').style.display='none';
+      applyRole(found.role);
+      fbSignIn(u, p).then(()=>{
+        console.log('Firebase currentUser after login:', fbAuth.currentUser?.email);
+        const allUsers = loadUsers();
+        fbSave('users', allUsers);
+        initDashboard();
+      });
+    } else {
+      err.textContent='Invalid username or password';
+      document.getElementById('luPass').value='';
+    }
+  };
+
+  // Try to get fresh users from Firebase
+  fbDB.ref('lcms/users').once('value')
+    .then(snap => {
+      if(snap.exists() && snap.val()?.length > 0){
+        const fbUsers = snap.val();
+        localStorage.setItem('lcms_users', JSON.stringify(fbUsers));
+        attemptLogin(fbUsers);
+      } else {
+        attemptLogin(loadUsers());
+      }
+    })
+    .catch(() => attemptLogin(loadUsers())); // fallback to local if Firebase unreachable
 }
 function doLogout(){
   sessionStorage.removeItem('lcms_session');
@@ -1622,6 +1637,14 @@ let sortCol='inquiry_date', sortDir=-1, activeYear='2026', cpClientId=null, cpYe
 async function initDashboard(){
   // Show loading state
   document.getElementById('asof').textContent = 'Loading from Firebase…';
+  // Always fetch latest users from Firebase first
+  try {
+    const uSnap = await fbDB.ref('lcms/users').get();
+    if(uSnap.exists() && uSnap.val()?.length > 0){
+      localStorage.setItem('lcms_users', JSON.stringify(uSnap.val()));
+      console.log('Users loaded from Firebase:', uSnap.val().length);
+    }
+  } catch(e){ console.warn('Could not load users from Firebase:', e.message); }
   D = await loadFromFirebase();
   // Also load timetable & board from Firebase
   try {
