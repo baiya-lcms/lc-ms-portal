@@ -1155,26 +1155,45 @@ const REV_GOAL = 20000000;
 
 // ── AUTH SYSTEM ──────────────────────────────────────────────────────────
 const DEFAULT_USERS = [
-  {id:1, username:'admin',  password:'admin123',  name:'Administrator', role:'admin',    timetable_id:''},
-  {id:2, username:'bib',    password:'bib123',    name:'Bib',           role:'manager',  timetable_id:''},
-  {id:3, username:'finance',password:'fin123',    name:'Finance Team',  role:'fin',      timetable_id:''},
-  {id:4, username:'san',    password:'san123',    name:'San',           role:'ops',      timetable_id:'San'},
-  {id:5, username:'alina',  password:'alina123',  name:'Alina',         role:'ops',      timetable_id:'Alina'},
-  {id:6, username:'zai',    password:'zai123',    name:'Zai',           role:'ops',      timetable_id:'Zai'},
-  
+  {id:1,  username:'admin',   password:'admin123',   name:'Administrator', role:'admin',    timetable_id:''},
+  {id:2,  username:'bib',     password:'bib123',     name:'Bib',           role:'manager',  timetable_id:''},
+  {id:3,  username:'finance', password:'fin123',     name:'Finance Team',  role:'fin',      timetable_id:''},
+  {id:4,  username:'san',     password:'san123',     name:'San',           role:'ops',      timetable_id:'San'},
+  {id:5,  username:'alina',   password:'alina123',   name:'Alina',         role:'ops',      timetable_id:'Alina'},
+  {id:6,  username:'zai',     password:'zai123',     name:'Zai',           role:'ops',      timetable_id:'Zai'},
+  {id:7,  username:'kwan',    password:'kwan123',    name:'Kwan',          role:'intern',   timetable_id:'Kwan'},
+  {id:8,  username:'salome',  password:'salome123',  name:'Salome',        role:'intern',   timetable_id:'Salome'},
+  {id:9,  username:'louis',   password:'louis123',   name:'Louis',         role:'intern',   timetable_id:'Louis'},
+  {id:10, username:'samuel',  password:'samuel123',  name:'Samuel',        role:'intern',   timetable_id:'Samuel'},
+  {id:11, username:'kieron',  password:'kieron123',  name:'Kieron',        role:'intern',   timetable_id:'Kieron'},
+  {id:12, username:'james',   password:'james123',   name:'James',         role:'intern',   timetable_id:'James'},
 ];
 let currentUser = null;
 
 function loadUsers(){
   const s=localStorage.getItem('lcms_users');
+  // Always start with DEFAULT_USERS as base, then overlay any saved customizations
+  const base = JSON.parse(JSON.stringify(DEFAULT_USERS));
   if(s){
-    const users=JSON.parse(s);
-    const admin=users.find(x=>x.username==='admin');
-    if(admin){ admin.password='admin123'; }
-    localStorage.setItem('lcms_users',JSON.stringify(users));
-    return users;
+    const saved = JSON.parse(s);
+    // Merge: keep DEFAULT_USERS but add any extra users saved locally
+    const merged = [...base];
+    saved.forEach(su => {
+      const existing = merged.find(u=>u.username===su.username);
+      if(existing){
+        // Update password if changed, keep other saved props
+        existing.password = su.password;
+        existing.timetable_id = su.timetable_id || existing.timetable_id;
+      } else {
+        merged.push(su); // add extra users not in DEFAULT_USERS
+      }
+    });
+    // Reset admin password to default (fix)
+    const admin = merged.find(x=>x.username==='admin');
+    if(admin) admin.password='admin123';
+    return merged;
   }
-  return JSON.parse(JSON.stringify(DEFAULT_USERS));
+  return base;
 }
 function saveUsers(u){ 
   localStorage.setItem('lcms_users',JSON.stringify(u)); 
