@@ -2990,8 +2990,8 @@ function ttToggleMyTasks(forceOff){
 
 // ── WEEKLY WORK BOARD ────────────────────────────────────────────────────
 const WB_COLS = [
-  {id:'prep',    label:'🧪 Sample Prep',                  color:'#375623', border:'#c6e0b4', bg:'#f0fdf4', hdrBorder:'#375623', roles:['admin','manager','ops','intern','fin']},
   {id:'recv',    label:'📥 Samples Received',             color:'#1F4E79', border:'#bcd3ed', bg:'#f0f6ff', hdrBorder:'#1F4E79', roles:['admin','manager','ops']},
+  {id:'prep',    label:'🧪 Sample Prep',                  color:'#375623', border:'#c6e0b4', bg:'#f0fdf4', hdrBorder:'#375623', roles:['admin','manager','ops','intern','fin']},
   {id:'data',    label:'📊 Data Analysis',                color:'#C55A11', border:'#fcd9bd', bg:'#fff8f0', hdrBorder:'#C55A11', roles:['admin','manager','ops','intern','fin']},
   {id:'qc',      label:'🔍 Data Analysis in Revision',   color:'#7c3aed', border:'#ddd6fe', bg:'#faf5ff', hdrBorder:'#7c3aed', roles:['admin','manager','ops']},
 ];
@@ -3057,18 +3057,16 @@ function renderWorkBoard(){
   const userRole = currentUser ? currentUser.role : 'intern';
   const visibleCols = WB_COLS.filter(col => col.roles.includes(userRole));
 
-  // Build auto-cards from timetable tasks this week
+  // Build auto-cards from timetable tasks this week — grouped by project+col
   const ttTypeToCol = { prep:'prep', acq:'recv', data:'data', revision:'qc' };
-  const autoCards = [];
+  const autoCardMap = {}; // key: col+projKey → card
   if(ttTasks){
     ttTasks.forEach(t => {
       const col = ttTypeToCol[t.type];
       if(!col) return;
-      // Only include tasks in this week
       if(!t.date) return;
       const taskWeek = isoDate(weekMonday(new Date(t.date)));
       if(taskWeek !== weekKey) return;
-      // Get project info
       const projIds = t.project_ids||[];
       const projLabels = projIds.map(id => {
         const p = D.projects.find(x=>x.id===id);
@@ -3076,18 +3074,30 @@ function renderWorkBoard(){
       }).filter(Boolean);
       const proj = projIds.length ? D.projects.find(x=>x.id===projIds[0]) : null;
       const method = proj ? proj.method : '';
-      autoCards.push({
-        id: 'auto_'+t.id,
-        col, week: weekKey, auto: true,
-        projs: projLabels.join(', ') || t.desc || '—',
-        users: t.person ? [t.person] : [],
-        method,
-        days: new Date(t.date).toLocaleDateString('en-GB',{weekday:'short'}),
-        notes: t.desc||'',
-        project_ids: projIds,
-      });
+      const projKey = projLabels.join(',') || t.desc || 'misc';
+      const mapKey = col + '|' + projKey;
+      const dayStr = new Date(t.date).toLocaleDateString('en-GB',{weekday:'short'});
+      if(autoCardMap[mapKey]){
+        // Add person to existing card
+        if(t.person && !autoCardMap[mapKey].users.includes(t.person))
+          autoCardMap[mapKey].users.push(t.person);
+        // Merge days
+        if(dayStr && !autoCardMap[mapKey].days.includes(dayStr))
+          autoCardMap[mapKey].days += ', ' + dayStr;
+      } else {
+        autoCardMap[mapKey] = {
+          id: 'auto_'+mapKey,
+          col, week: weekKey, auto: true,
+          projs: projLabels.join(', ') || t.desc || '—',
+          users: t.person ? [t.person] : [],
+          method, days: dayStr,
+          notes: t.desc||'',
+          project_ids: projIds,
+        };
+      }
     });
   }
+  const autoCards = Object.values(autoCardMap);
 
   grid.innerHTML = visibleCols.map(col=>{
     const manualCards = wbCards.filter(c=>c.col===col.id && c.week===weekKey);
