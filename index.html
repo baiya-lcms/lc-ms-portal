@@ -721,7 +721,7 @@ body.role-intern .pay-col,body.role-intern .fin-kpi,body.role-intern .rev-progre
 
 <!-- Weekly Work Board Card Modal -->
 <div class="ov" id="wbMov">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:500px">
     <div class="mhdr" id="wbMHdr">
       <h3 id="wbMTitle">Add Card</h3>
       <button class="mclose" onclick="cm('wbMov')">×</button>
@@ -731,17 +731,19 @@ body.role-intern .pay-col,body.role-intern .fin-kpi,body.role-intern .rev-progre
       <input type="hidden" id="wb_col">
       <div class="fg">
         <div class="fgrp full">
-          <label>Project No(s) <span style="font-weight:400;font-size:.7rem;color:#94a3b8">— separate multiple with commas, e.g. P561, P562</span></label>
-          <input id="wb_projs" placeholder="e.g. P561, P562">
+          <label>Project <span style="font-weight:400;font-size:.7rem;color:#94a3b8">— select from active projects</span></label>
+          <input id="wb_proj_search" placeholder="🔍 Search project no. or client..." oninput="wbFilterProjects()" style="margin-bottom:5px;width:100%;padding:6px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem">
+          <select id="wb_proj_select" size="4" style="width:100%;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.78rem;padding:4px" onchange="wbOnProjSelect()"></select>
+          <div id="wb_proj_tags" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:5px"></div>
         </div>
         <div class="fgrp full">
-          <label>Assigned Team Members <span style="font-weight:400;font-size:.7rem;color:#94a3b8">— select one or more</span></label>
+          <label>Assigned Team Members</label>
           <div id="wb_user_pills" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;min-height:42px;cursor:pointer" onclick="toggleWbUserPicker()"></div>
           <div id="wb_user_picker" style="display:none;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px;flex-wrap:wrap;gap:6px;margin-top:4px"></div>
         </div>
         <div class="fgrp">
           <label>Method / Type</label>
-          <select id="wb_method">
+          <select id="wb_method" onchange="wbCalcRunTime()">
             <option value="">— Select —</option>
             <option value="Metabolomics">Metabolomics</option>
             <option value="Lipidomics">Lipidomics</option>
@@ -754,6 +756,11 @@ body.role-intern .pay-col,body.role-intern .fin-kpi,body.role-intern .rev-progre
         <div class="fgrp">
           <label>Day(s)</label>
           <input id="wb_days" placeholder="e.g. Mon, Tue">
+        </div>
+        <!-- Run time calculator -->
+        <div class="fgrp full" id="wb_runtime_box" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px">
+          <div style="font-size:.75rem;font-weight:700;color:#166534;margin-bottom:4px">⏱ Estimated Run Time</div>
+          <div id="wb_runtime_detail" style="font-size:.78rem;color:#374151"></div>
         </div>
         <div class="fgrp full">
           <label>Notes</label>
@@ -784,7 +791,7 @@ body.role-intern .pay-col,body.role-intern .fin-kpi,body.role-intern .rev-progre
       </div>
       <div>
         <label style="font-size:.75rem;font-weight:600;color:#475569;display:block;margin-bottom:4px">Task Type</label>
-        <select id="ttType" onchange="ttAutoDesc()" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+        <select id="ttType" onchange="ttAutoDesc();ttCalcRunTime()" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
           <option value="data">Data Analysis</option>
           <option value="prep">Sample Prep</option>
           <option value="acq">LC-MS Acquisition</option>
@@ -836,6 +843,13 @@ body.role-intern .pay-col,body.role-intern .fin-kpi,body.role-intern .rev-progre
           Notes / Additional Details <span style="font-weight:400;color:#94a3b8">(auto-filled from projects above)</span>
         </label>
         <textarea id="ttDesc" rows="2" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem;resize:vertical" placeholder="e.g. Neg mode, 12 samples — or leave blank to auto-generate"></textarea>
+      </div>
+      <!-- Run time calculator -->
+      <div style="grid-column:1/-1" id="tt_runtime_box" style="display:none">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px">
+          <div style="font-size:.75rem;font-weight:700;color:#166534;margin-bottom:4px">⏱ Estimated LC-MS Run Time</div>
+          <div id="tt_runtime_detail" style="font-size:.78rem;color:#374151"></div>
+        </div>
       </div>
       <input type="hidden" id="ttEditId">
     </div>
@@ -2976,11 +2990,28 @@ function ttToggleMyTasks(forceOff){
 
 // ── WEEKLY WORK BOARD ────────────────────────────────────────────────────
 const WB_COLS = [
-  {id:'prep',  label:'🧪 Sample Prep',       color:'#375623', border:'#c6e0b4', bg:'#f0fdf4', hdrBorder:'#375623'},
-  {id:'qtof',  label:'⚗️ QTOF',              color:'#1F4E79', border:'#bcd3ed', bg:'#f0f6ff', hdrBorder:'#1F4E79'},
-  {id:'tq',    label:'⚡ TQ',                color:'#7c3aed', border:'#ddd6fe', bg:'#faf5ff', hdrBorder:'#7c3aed'},
-  {id:'data',  label:'📊 Data Analysis',     color:'#C55A11', border:'#fcd9bd', bg:'#fff8f0', hdrBorder:'#C55A11'},
+  {id:'prep',    label:'🧪 Sample Prep',                  color:'#375623', border:'#c6e0b4', bg:'#f0fdf4', hdrBorder:'#375623', roles:['admin','manager','ops','intern','fin']},
+  {id:'recv',    label:'📥 Samples Received',             color:'#1F4E79', border:'#bcd3ed', bg:'#f0f6ff', hdrBorder:'#1F4E79', roles:['admin','manager','ops']},
+  {id:'data',    label:'📊 Data Analysis',                color:'#C55A11', border:'#fcd9bd', bg:'#fff8f0', hdrBorder:'#C55A11', roles:['admin','manager','ops','intern','fin']},
+  {id:'qc',      label:'🔍 Data Analysis in Revision',   color:'#7c3aed', border:'#ddd6fe', bg:'#faf5ff', hdrBorder:'#7c3aed', roles:['admin','manager','ops']},
 ];
+// Method color coding for workboard cards
+const WB_METHOD_COLORS = {
+  'Metabolomics':           {bg:'#dbeafe', border:'#93c5fd', text:'#1e40af'},
+  'Lipidomics':             {bg:'#d1fae5', border:'#6ee7b7', text:'#065f46'},
+  'Proteomics':             {bg:'#ede9fe', border:'#c4b5fd', text:'#5b21b6'},
+  'Peptide Mapping':        {bg:'#fce7f3', border:'#f9a8d4', text:'#9d174d'},
+  'Quantification':         {bg:'#fef9c3', border:'#fde047', text:'#854d0e'},
+  'Protein Characterization':{bg:'#ffedd5', border:'#fdba74', text:'#c2410c'},
+};
+// Run time constants (minutes per sample)
+const RUN_TIME = {
+  'Metabolomics': 40,   // 20 min × 2 modes
+  'Lipidomics':   40,
+  'Proteomics':   85,
+  'Peptide Mapping': 85,
+  'Quantification': 20,
+};
 const WB_USER_COLORS = ['#dbeafe','#dcfce7','#fce7f3','#fef3c7','#ede9fe','#ffedd5','#d1fae5','#fee2e2'];
 const WB_USER_TEXT   = ['#1e40af','#166534','#9d174d','#92400e','#5b21b6','#c2410c','#065f46','#991b1b'];
 
@@ -3007,21 +3038,61 @@ function getUserColorIdx(name){
 
 function renderWorkBoard(){
   if(!wbCards) wbCards = loadWbCards();
-  // ── Migrate old cards that have no week property ──
   const weekKey = ttWeekStart ? isoDate(ttWeekStart) : isoDate(weekMonday(new Date()));
   let migrated = false;
   wbCards.forEach(c=>{ if(!c.week){ c.week = weekKey; migrated = true; } });
   if(migrated) saveWbCards();
   const grid = document.getElementById('wbGrid');
   if(!grid) return;
-  grid.innerHTML = WB_COLS.map(col=>{
-    const cards = wbCards.filter(c=>c.col===col.id && c.week===weekKey);
+
+  const userRole = currentUser ? currentUser.role : 'intern';
+  const visibleCols = WB_COLS.filter(col => col.roles.includes(userRole));
+
+  // Build auto-cards from timetable tasks this week
+  const ttTypeToCol = { prep:'prep', acq:'recv', data:'data', revision:'qc' };
+  const autoCards = [];
+  if(ttTasks){
+    ttTasks.forEach(t => {
+      const col = ttTypeToCol[t.type];
+      if(!col) return;
+      // Only include tasks in this week
+      if(!t.date) return;
+      const taskWeek = isoDate(weekMonday(new Date(t.date)));
+      if(taskWeek !== weekKey) return;
+      // Get project info
+      const projIds = t.project_ids||[];
+      const projLabels = projIds.map(id => {
+        const p = D.projects.find(x=>x.id===id);
+        return p ? `P${p.project_no}` : '';
+      }).filter(Boolean);
+      const proj = projIds.length ? D.projects.find(x=>x.id===projIds[0]) : null;
+      const method = proj ? proj.method : '';
+      autoCards.push({
+        id: 'auto_'+t.id,
+        col, week: weekKey, auto: true,
+        projs: projLabels.join(', ') || t.desc || '—',
+        users: t.person ? [t.person] : [],
+        method,
+        days: new Date(t.date).toLocaleDateString('en-GB',{weekday:'short'}),
+        notes: t.desc||'',
+        project_ids: projIds,
+      });
+    });
+  }
+
+  grid.innerHTML = visibleCols.map(col=>{
+    const manualCards = wbCards.filter(c=>c.col===col.id && c.week===weekKey);
+    const colAutoCards = autoCards.filter(c=>c.col===col.id);
+    // Deduplicate: don't show auto-card if manual card has same project
+    const manualProjs = new Set(manualCards.flatMap(c=>(c.projs||'').split(',').map(p=>p.trim())));
+    const filteredAuto = colAutoCards.filter(ac => !(ac.projs.split(',').map(p=>p.trim()).every(p=>manualProjs.has(p))));
+    const allCards = [...filteredAuto, ...manualCards];
     return `<div class="wb-col" style="background:${col.bg};border:1px solid ${col.border}" data-col="${col.id}" ondragover="wbDragOver(event)" ondrop="wbDrop(event,'${col.id}')" ondragleave="wbDragLeave(event)">
       <div class="wb-col-hdr" style="border-color:${col.hdrBorder}">
         <div class="wb-title" style="color:${col.color}">${col.label}</div>
-        <span class="wb-cnt" style="color:${col.color}">${cards.length}</span>
+        <span class="wb-cnt" style="color:${col.color}">${allCards.length}</span>
       </div>
-      ${cards.map(card=>renderWbCard(card)).join('')}
+      ${allCards.map(card=>renderWbCard(card)).join('')}
       <button class="wb-add-btn" onclick="openWbModal('${col.id}')">+ Add card</button>
     </div>`;
   }).join('');
@@ -3033,18 +3104,93 @@ function renderWbCard(card){
     const idx = getUserColorIdx(u);
     return `<span class="wb-tag-user" style="background:${WB_USER_COLORS[idx]};color:${WB_USER_TEXT[idx]}">${u}</span>`;
   }).join('');
-  const methodTag = card.method ? `<span class="wb-tag-method">${card.method}</span>` : '';
+  // Method color
+  const mc = WB_METHOD_COLORS[card.method] || null;
+  const methodTag = card.method ? `<span style="padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700;background:${mc?mc.bg:'#f0f9ff'};color:${mc?mc.text:'#0369a1'};border:1px solid ${mc?mc.border:'#bae6fd'}">${card.method}</span>` : '';
   const dayTags = (card.days||'').split(',').map(d=>d.trim()).filter(Boolean)
     .map(d=>`<span class="wb-tag-day">${d}</span>`).join('');
-  return `<div class="wb-card" draggable="true" ondragstart="wbDragStart(event,${card.id})" ondragend="this.style.opacity='1'" onclick="openWbModal('${card.col}',${card.id})">
-    <div class="wb-card-projs">${card.projs||'—'}</div>
+  // Run time badge
+  const rt = card.run_mins ? `<span style="font-size:.65rem;color:#64748b;margin-left:4px">⏱ ${card.run_mins>=60?Math.floor(card.run_mins/60)+'h'+(card.run_mins%60?card.run_mins%60+'m':''):card.run_mins+'m'}</span>` : '';
+  // Auto-card indicator
+  const autoBadge = card.auto ? `<span style="font-size:.6rem;background:#e0f2fe;color:#0369a1;padding:1px 5px;border-radius:6px;margin-left:4px">auto</span>` : '';
+  const cardBg = mc ? `background:${mc.bg}22` : '';
+  const isAuto = card.auto;
+  const clickAttr = isAuto ? `onclick="void(0)"` : `onclick="openWbModal('${card.col}',${card.id})"`;
+  const dragAttr = isAuto ? '' : `draggable="true" ondragstart="wbDragStart(event,${card.id})" ondragend="this.style.opacity='1'"`;
+  return `<div class="wb-card" ${dragAttr} ${clickAttr} style="${cardBg}${isAuto?'border-style:dashed;cursor:default;opacity:.9':''}">
+    <div class="wb-card-projs">${card.projs||'—'}${autoBadge}${rt}</div>
     <div class="wb-tags">${userTags}</div>
     <div class="wb-tags">${methodTag}${dayTags}</div>
-    ${card.notes?`<div style="font-size:.68rem;color:#94a3b8;margin-top:3px">${card.notes}</div>`:''}
-    <div class="wb-card-actions">
-      <button class="bdel edit-btn" onclick="event.stopPropagation();delWbCard(${card.id})">×</button>
-    </div>
+    ${card.notes&&!isAuto?`<div style="font-size:.68rem;color:#94a3b8;margin-top:3px">${card.notes}</div>`:''}
+    ${!isAuto?`<div class="wb-card-actions"><button class="bdel edit-btn" onclick="event.stopPropagation();delWbCard(${card.id})">×</button></div>`:''}
   </div>`;
+}
+
+// ── WB PROJECT SELECTOR ──────────────────────────────────────────────────
+let wbSelectedProjectIds = [];
+
+function wbFilterProjects(){
+  const q = (document.getElementById('wb_proj_search')||{value:''}).value.toLowerCase();
+  const sel = document.getElementById('wb_proj_select');
+  const active = (D.projects||[]).filter(p=>!['Project completed','Cancel'].includes(p.work_status));
+  const filtered = q ? active.filter(p=>String(p.project_no).includes(q)||
+    (p.customer||'').toLowerCase().includes(q)) : active;
+  sel.innerHTML = filtered.slice(0,50).map(p=>
+    `<option value="${p.id}">P${p.project_no} · ${p.customer||'?'} · ${p.method||'—'} (${p.num_samples||0} smp)</option>`
+  ).join('');
+}
+
+function wbOnProjSelect(){
+  const sel = document.getElementById('wb_proj_select');
+  const id = parseInt(sel.value);
+  if(!id || wbSelectedProjectIds.includes(id)) return;
+  wbSelectedProjectIds.push(id);
+  wbRenderProjTags();
+  // Auto-fill method from project
+  const proj = (D.projects||[]).find(p=>p.id===id);
+  if(proj && proj.method && !document.getElementById('wb_method').value){
+    document.getElementById('wb_method').value = proj.method;
+  }
+  wbCalcRunTime();
+}
+
+function wbRenderProjTags(){
+  const container = document.getElementById('wb_proj_tags');
+  if(!container) return;
+  container.innerHTML = wbSelectedProjectIds.map(id=>{
+    const p = (D.projects||[]).find(x=>x.id===id);
+    const label = p ? `P${p.project_no} · ${p.customer||'?'}` : `ID:${id}`;
+    return `<span style="background:#dbeafe;color:#1e40af;padding:3px 8px;border-radius:10px;font-size:.7rem;font-weight:600;display:inline-flex;align-items:center;gap:4px">
+      ${label} <span onclick="wbRemoveProj(${id})" style="cursor:pointer;opacity:.7">×</span>
+    </span>`;
+  }).join('');
+  wbCalcRunTime();
+}
+
+function wbRemoveProj(id){
+  wbSelectedProjectIds = wbSelectedProjectIds.filter(x=>x!==id);
+  wbRenderProjTags();
+}
+
+function wbCalcRunTime(){
+  const method = document.getElementById('wb_method')?.value;
+  const minsPerSamp = RUN_TIME[method];
+  const box = document.getElementById('wb_runtime_box');
+  const detail = document.getElementById('wb_runtime_detail');
+  if(!minsPerSamp || !wbSelectedProjectIds.length){ if(box) box.style.display='none'; return; }
+  const rows = wbSelectedProjectIds.map(id=>{
+    const p = (D.projects||[]).find(x=>x.id===id);
+    if(!p) return null;
+    const samp = p.num_samples||0;
+    const total = samp * minsPerSamp;
+    const hrs = Math.floor(total/60), mins = total%60;
+    return `P${p.project_no}: ${samp} smp × ${minsPerSamp} min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''}`;
+  }).filter(Boolean);
+  const totalMins = wbSelectedProjectIds.reduce((s,id)=>{
+    const p=(D.projects||[]).find(x=>x.id===id); return s+(p?((p.num_samples||0)*minsPerSamp):0);
+  },0);
+  if(box) box.style.display='';
+  if(detail) detail.innerHTML = rows.join('<br>') + (rows.length>1?`<br><b>Total: ${Math.floor(totalMins/60)}h ${totalMins%60}m</b>`:'');
 }
 
 function openWbModal(colId, cardId=null){
@@ -3059,12 +3205,28 @@ function openWbModal(colId, cardId=null){
   document.getElementById('wbMHdr').style.borderRadius = '14px 14px 0 0';
   document.getElementById('wbSaveBtn').style.background = col ? col.color : '#1F4E79';
   document.getElementById('wbSaveBtn').style.color = '#fff';
-  document.getElementById('wb_projs').value  = card ? card.projs  : '';
-  document.getElementById('wb_method').value = card ? card.method : '';
-  document.getElementById('wb_days').value   = card ? card.days   : '';
-  document.getElementById('wb_notes').value  = card ? card.notes  : '';
+  // Project selector
+  wbSelectedProjectIds = [];
+  if(card && card.project_ids) wbSelectedProjectIds = [...card.project_ids];
+  else if(card && card.projs){
+    // Legacy: parse project numbers from string
+    card.projs.split(',').forEach(pstr => {
+      const pno = pstr.replace(/P/i,'').trim();
+      const p = (D.projects||[]).find(x=>String(x.project_no)===pno);
+      if(p) wbSelectedProjectIds.push(p.id);
+    });
+  }
+  wbFilterProjects();
+  wbRenderProjTags();
+  document.getElementById('wb_proj_search').value = '';
+  document.getElementById('wb_method').value = card ? (card.method||'') : '';
+  document.getElementById('wb_days').value   = card ? (card.days||'')   : '';
+  document.getElementById('wb_notes').value  = card ? (card.notes||'')  : '';
+  const rbox = document.getElementById('wb_runtime_box');
+  if(rbox) rbox.style.display = 'none';
   wbSelectedUsers = card ? [...(card.users||[])] : [];
   renderWbUserPicker();
+  wbCalcRunTime();
   document.getElementById('wbMov').classList.add('open');
 }
 
@@ -3101,19 +3263,34 @@ function toggleWbUser(name){
 }
 
 function saveWbCard(){
-  const projs = document.getElementById('wb_projs').value.trim();
-  if(!projs){ toast('Please enter at least one project number'); return; }
   const colId = document.getElementById('wb_col').value;
   const existingId = document.getElementById('wb_id').value;
+  const method = document.getElementById('wb_method').value;
+  // Build projs label from selected IDs
+  const projLabels = wbSelectedProjectIds.map(id=>{
+    const p=(D.projects||[]).find(x=>x.id===id);
+    return p?`P${p.project_no}`:'';
+  }).filter(Boolean).join(', ');
+  if(!projLabels && !document.getElementById('wb_notes').value.trim()){
+    toast('Please select at least one project'); return;
+  }
+  // Calculate run time
+  const minsPerSamp = RUN_TIME[method]||0;
+  const runMins = wbSelectedProjectIds.reduce((s,id)=>{
+    const p=(D.projects||[]).find(x=>x.id===id);
+    return s+(p?((p.num_samples||0)*minsPerSamp):0);
+  },0);
   const card = {
     id: existingId ? parseInt(existingId) : Date.now(),
     col: colId,
     week: ttWeekStart ? isoDate(ttWeekStart) : isoDate(weekMonday(new Date())),
-    projs,
+    project_ids: [...wbSelectedProjectIds],
+    projs: projLabels || document.getElementById('wb_notes').value.trim(),
     users: [...wbSelectedUsers],
-    method: document.getElementById('wb_method').value.trim(),
-    days:   document.getElementById('wb_days').value.trim(),
-    notes:  document.getElementById('wb_notes').value.trim(),
+    method,
+    days:  document.getElementById('wb_days').value.trim(),
+    notes: document.getElementById('wb_notes').value.trim(),
+    run_mins: runMins || null,
   };
   if(existingId){ const i=wbCards.findIndex(c=>c.id===parseInt(existingId)); if(i>=0) wbCards[i]=card; }
   else wbCards.push(card);
@@ -3478,6 +3655,41 @@ function ttAutoDesc(){
   const projPart = selected.map(p=>`P${p.project_no}${p.num_samples?' ('+p.num_samples+')':''}`).join(', ');
   document.getElementById('ttDesc').value = typeLabel ? `${typeLabel} ${projPart}` : projPart;
   ttUpdateProjTags(ids);
+  ttCalcRunTime(ids);
+}
+
+function ttCalcRunTime(ids){
+  const type = document.getElementById('ttType')?.value;
+  const box = document.getElementById('tt_runtime_box');
+  const detail = document.getElementById('tt_runtime_detail');
+  if(!box||!detail) return;
+  // Only show for LC-MS acquisition type
+  if(type !== 'acq'){ box.style.display='none'; return; }
+  const projs = ttGetAllProjects();
+  const selected = (ids||ttGetSelectedProjectIds()).map(id=>projs.find(p=>p.id===id)).filter(Boolean);
+  if(!selected.length){ box.style.display='none'; return; }
+  let rows = [];
+  let totalMins = 0;
+  selected.forEach(p => {
+    const samp = p.num_samples||0;
+    const method = p.method||'';
+    const minsPerSamp = RUN_TIME[method]||0;
+    if(!minsPerSamp){ rows.push(`P${p.project_no}: method "${method}" — run time not configured`); return; }
+    const total = samp * minsPerSamp;
+    totalMins += total;
+    const hrs = Math.floor(total/60), mins = total%60;
+    let detail_str = '';
+    if(method==='Metabolomics'||method==='Lipidomics'){
+      detail_str = ` (${samp} smp × 20min × 2 modes = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''})`;
+    } else {
+      detail_str = ` (${samp} smp × ${minsPerSamp}min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''})`;
+    }
+    rows.push(`<b>P${p.project_no}</b> ${method}${detail_str}`);
+  });
+  const totH = Math.floor(totalMins/60), totM = totalMins%60;
+  box.style.display = '';
+  detail.innerHTML = rows.join('<br>') +
+    (selected.length>1 ? `<br><b>Total: ${totH>0?totH+'h ':''}${totM>0?totM+'m':''} (${totalMins} min)</b>` : '');
 }
 
 function ttJumpToProject(projId){
@@ -3523,6 +3735,7 @@ function openTTModal(person='', date=''){
   ttInstFilter='all'; ttSetInstFilter('all');
   ttPopulateProjectList([]);
   document.getElementById('ttDelBtn').style.display='none';
+  const rbox=document.getElementById('tt_runtime_box'); if(rbox) rbox.style.display='none';
   document.getElementById('ttMov').classList.add('open');
 }
 
