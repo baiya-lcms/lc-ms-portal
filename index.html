@@ -3006,11 +3006,20 @@ const WB_METHOD_COLORS = {
 };
 // Run time constants (minutes per sample)
 const RUN_TIME = {
-  'Metabolomics': 40,   // 20 min × 2 modes
-  'Lipidomics':   40,
-  'Proteomics':   85,
-  'Peptide Mapping': 85,
-  'Quantification': 20,
+  // QTOF untargeted — 40 min/smp (20 × 2 modes)
+  'Metabolomics':              40,
+  'Metabolite identification': 40,
+  'Lipidomics':                40,
+  // QTOF targeted / proteomics — 85 min/smp
+  'Proteomics':                85,
+  'Peptide mapping':           85,
+  'Peptidomics':               85,
+  'Protein identification':    85,
+  'Intact & subunit':          85,
+  // TQ quantification — 20 min/smp
+  'Quantification':            20,
+  'Quantification - Metabolite': 20,
+  'Quantification - Protein':  20,
 };
 const WB_USER_COLORS = ['#dbeafe','#dcfce7','#fce7f3','#fef3c7','#ede9fe','#ffedd5','#d1fae5','#fee2e2'];
 const WB_USER_TEXT   = ['#1e40af','#166534','#9d174d','#92400e','#5b21b6','#c2410c','#065f46','#991b1b'];
