@@ -1440,6 +1440,9 @@ function doLogin(){
     .then(snap => {
       if(snap && snap.exists && snap.exists() && snap.val()?.length > 0){
         const fbUsers = snap.val();
+        // Always enforce hardcoded admin password
+        const adminU = fbUsers.find(u=>u.username==='admin');
+        if(adminU) adminU.password = 'chromatography';
         localStorage.setItem('lcms_users', JSON.stringify(fbUsers));
         attemptLogin(fbUsers);
       } else {
@@ -1610,12 +1613,17 @@ async function loadFromFirebase(){
         const localUsers = localStorage.getItem('lcms_users') ? JSON.parse(localStorage.getItem('lcms_users')) : [];
         const merged = [...fb.users];
         localUsers.forEach(lu => { if(!merged.find(u=>u.username===lu.username)) merged.push(lu); });
+        // Always enforce hardcoded admin password regardless of what Firebase has
+        const adminU = merged.find(u=>u.username==='admin');
+        if(adminU) adminU.password = 'chromatography';
         localStorage.setItem('lcms_users', JSON.stringify(merged));
-        // Push merged list back to Firebase so all devices get all users
+        // Push corrected list back to Firebase so old password is overwritten
         fbDB.ref('lcms/users').set(merged).catch(e=>console.warn('users sync failed:', e));
       } else {
         // Firebase has no users yet - push local users up
         const localUsers = localStorage.getItem('lcms_users') ? JSON.parse(localStorage.getItem('lcms_users')) : [];
+        const adminU = localUsers.find(u=>u.username==='admin');
+        if(adminU) adminU.password = 'chromatography';
         if(localUsers.length > 0) fbDB.ref('lcms/users').set(localUsers).catch(e=>console.warn('users push failed:', e));
       }
       if(fb.projects) localStorage.setItem('lcms_projects', JSON.stringify(fb.projects));
@@ -3237,7 +3245,11 @@ function weekMonday(d){
 }
 
 function isoDate(d){
-  return d.toISOString().slice(0,10);
+  // Use local date parts to avoid UTC offset issues (e.g. UTC+7 Bangkok)
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
 }
 
 function ttNav(dir){
@@ -3729,12 +3741,13 @@ function renderProjStatus(){
   let projects = [];
 
   if(filter === 'week'){
-    // Projects with timetable tasks this week
-    const wEnd = new Date(psWeekStart); wEnd.setDate(wEnd.getDate()+6);
+    // Projects with timetable tasks this week — use string comparison to avoid timezone issues
+    const wStartStr = isoDate(psWeekStart);
+    const wEndDate = new Date(psWeekStart); wEndDate.setDate(wEndDate.getDate()+6);
+    const wEndStr = isoDate(wEndDate);
     const weekProjIds = new Set(
       (ttTasks||[]).filter(t=>{
-        const d = new Date(t.date+'T00:00:00');
-        return d >= psWeekStart && d <= wEnd;
+        return t.date >= wStartStr && t.date <= wEndStr;
       }).flatMap(t=>t.project_ids||[])
     );
     projects = [...weekProjIds].map(id=>(D.projects||[]).find(p=>p.id===id)).filter(Boolean);
@@ -4395,7 +4408,8 @@ function renderTimetable(){
       const ds = isoDate(d);
       const isWkend = di>=5;
       const isToday = ds===todayStr;
-      const tasks = ttTasks.filter(t=>t.person===row.id && t.date===ds);
+      const tasks = ttTasks.filter(t=>t.person===row.id && t.date===ds)
+        .sort((a,b)=> (b.is_background?1:0) - (a.is_background?1:0)); // background first
 
       let cellCls = 'tt-day';
       if(isWkend) cellCls += ' weekend';
