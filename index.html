@@ -1623,6 +1623,7 @@ async function loadFromFirebase(){
       if(fb.fin)      localStorage.setItem('lcms_fin',      JSON.stringify(fb.fin));
       if(fb.inq2)      localStorage.setItem('lcms_inq2',      JSON.stringify(fb.inq2));
       if(fb.timelines)  localStorage.setItem('lcms_timelines', JSON.stringify(fb.timelines));
+      if(fb.hold)       localStorage.setItem('lcms_hold', JSON.stringify(fb.hold));
       if(fb.rtqueue)    { localStorage.setItem('lcms_rtqueue', JSON.stringify(fb.rtqueue)); rtQueueStore=fb.rtqueue; }
       return {
         clients:  fb.clients  || JSON.parse(JSON.stringify(SD_CLIENTS)),
@@ -1896,6 +1897,62 @@ async function initDashboard(){
       vtgt?.classList.add('active');
     }
   }
+
+  // ── REAL-TIME FIREBASE LISTENERS ─────────────────────────────────────────
+  // These keep all devices in sync instantly when any user makes changes
+  // _fbSaving flag prevents re-rendering when we ourselves just wrote to Firebase
+  window._fbSaving = false;
+
+  // Hold board
+  try {
+    fbDB.ref('lcms/hold').on('value', snap => {
+      if(snap.exists()) localStorage.setItem('lcms_hold', JSON.stringify(snap.val()));
+      else localStorage.removeItem('lcms_hold');
+      holdRender();
+    });
+  } catch(e){ console.warn('hold listener failed:', e); }
+
+  // Timetable tasks
+  try {
+    fbDB.ref('lcms/timetable').on('value', snap => {
+      if(snap.exists()){
+        ttTasks = snap.val();
+        localStorage.setItem('lcms_timetable', JSON.stringify(ttTasks));
+        // Only re-render if timetable tab is visible (avoid flicker on other tabs)
+        if(!window._fbSaving && document.getElementById('v-timetable')?.classList.contains('active')){
+          renderTimetable();
+        }
+      }
+    });
+  } catch(e){ console.warn('timetable listener failed:', e); }
+
+  // Project Progress timelines
+  try {
+    fbDB.ref('lcms/timelines').on('value', snap => {
+      if(snap.exists()){
+        D.timelines = snap.val();
+        localStorage.setItem('lcms_timelines', JSON.stringify(D.timelines));
+        if(!window._fbSaving && document.getElementById('v-projstatus')?.classList.contains('active')){
+          renderProjStatus();
+        }
+      }
+    });
+  } catch(e){ console.warn('timelines listener failed:', e); }
+
+  // Work Board (Planner)
+  try {
+    fbDB.ref('lcms/wbcards').on('value', snap => {
+      if(snap.exists()){
+        const incoming = snap.val();
+        // Avoid overwriting with stale data if we just saved
+        wbCards = incoming;
+        localStorage.setItem('lcms_wb', JSON.stringify(wbCards));
+        if(!window._fbSaving && document.getElementById('v-workboard')?.classList.contains('active')){
+          renderWorkBoard();
+        }
+      }
+    });
+  } catch(e){ console.warn('wbcards listener failed:', e); }
 }
 
 window.addEventListener('DOMContentLoaded', async ()=>{
@@ -1976,7 +2033,10 @@ function sw(id,el){
 
 // ── PROJECTS ON HOLD BOARD ────────────────────────────────────────────────
 function holdLoad(){ try{ return JSON.parse(localStorage.getItem('lcms_hold')||'[]'); }catch(e){ return []; } }
-function holdSave(arr){ localStorage.setItem('lcms_hold', JSON.stringify(arr)); }
+function holdSave(arr){
+  localStorage.setItem('lcms_hold', JSON.stringify(arr));
+  fbSave('hold', arr); // sync to Firebase so all devices see it
+}
 
 function holdRender(){
   const items = holdLoad();
@@ -3159,6 +3219,7 @@ function loadTTTasks(){
 }
 function saveTTTasks(){
   localStorage.setItem('lcms_timetable', JSON.stringify(ttTasks));
+  window._fbSaving = true; setTimeout(()=>{ window._fbSaving=false; }, 3000);
   fbSave('timetable', ttTasks);
 }
 function ttNextId(){
@@ -3255,7 +3316,7 @@ function loadWbCards(){
   if(migrated) localStorage.setItem('lcms_wb', JSON.stringify(cards));
   return cards;
 }
-function saveWbCards(){ localStorage.setItem('lcms_wb', JSON.stringify(wbCards)); fbSave('wbcards', wbCards); }
+function saveWbCards(){ localStorage.setItem('lcms_wb', JSON.stringify(wbCards)); window._fbSaving=true; setTimeout(()=>{ window._fbSaving=false; },3000); fbSave('wbcards', wbCards); }
 
 function getUserColorIdx(name){
   let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%WB_USER_COLORS.length;
@@ -3640,6 +3701,7 @@ function getTimeline(projId){
 
 function saveTimelines(){
   localStorage.setItem('lcms_timelines', JSON.stringify(D.timelines||{}));
+  window._fbSaving = true; setTimeout(()=>{ window._fbSaving=false; }, 3000);
   if(fbAuth.currentUser) fbSave('timelines', D.timelines);
 }
 
