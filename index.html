@@ -253,35 +253,40 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .tt-table th{background:#1F4E79;color:#fff;padding:9px 10px;font-size:.7rem;font-weight:700;text-align:center;border:1px solid #17375E;white-space:nowrap}
 .tt-table th.tt-person{background:#17375E;text-align:left;min-width:90px}
 .tt-table td{border:1px solid #e2e8f0;padding:5px 6px;vertical-align:top;min-width:100px;min-height:52px}
-.tt-table tr:nth-child(odd) td.tt-name{background:#f0f4ff}
-.tt-table tr:nth-child(even) td.tt-name{background:#e8edf8}
-.tt-table td.tt-name{font-weight:700;font-size:.75rem;color:#1F4E79;background:#f0f6ff;text-align:center;padding:6px;border-right:2px solid #bcd3ed;position:sticky;left:0;z-index:2;white-space:nowrap}
-.tt-table td.tt-name.inst{color:#553c9a;background:#f5f0ff;border-right:2px solid #c4b5f5}
-.tt-table td.tt-name.inst-tq{color:#0e7490;background:#f0fdff;border-right:2px solid #a5f3fc}
+.tt-table tr:nth-child(odd) td.tt-name{background:inherit}
+.tt-table tr:nth-child(even) td.tt-name{background:inherit}
+.tt-table td.tt-name{font-weight:700;font-size:.75rem;background:#dbeafe;color:#1e40af;text-align:center;padding:6px;border-right:2px solid #93c5fd;position:sticky;left:0;z-index:2;white-space:nowrap}
+/* Instruments */
+.tt-table td.tt-name.inst{color:#fff;background:#7c3aed;border-right:2px solid #6d28d9}
+.tt-table td.tt-name.inst-tq{color:#fff;background:#0e7490;border-right:2px solid #0891b2}
+/* Interns — light purple */
+.tt-table td.tt-name.intern-row{background:#ede9fe;color:#5b21b6;border-right:2px solid #c4b5fd}
+/* Staff (ops/manager) — navy blue, already default above */
 .tt-table td.tt-day{cursor:pointer;transition:background .15s}
 .tt-table td.tt-day:hover{background:#f0f6ff}
 .tt-table td.tt-day.today{outline:2px solid #2E75B6;outline-offset:-2px;background:#e8f4ff}
 .tt-table td.tt-day.weekend{background:#fafafa}
-.tt-chip{padding:4px 7px;border-radius:6px;font-size:.67rem;font-weight:600;margin-bottom:3px;line-height:1.4;cursor:pointer;display:block;transition:opacity .15s;border-left:3px solid transparent}
+.tt-chip{padding:4px 7px;border-radius:6px;font-size:.67rem;font-weight:600;margin-bottom:3px;line-height:1.4;cursor:pointer;display:block;transition:opacity .15s;border-left:3px solid #e2e8f0;background:#f1f5f9;color:#334155}
 .tt-chip:hover{opacity:.78}
 .tt-chip:last-child{margin-bottom:0}
-/* Task type colors */
-.tt-chip.data{background:#deeaf1;color:#1F4E79;border-left-color:#1F4E79}
-.tt-chip.prep{background:#e2f0d9;color:#375623;border-left-color:#375623}
-.tt-chip.acq{background:#fce4d6;color:#C55A11;border-left-color:#C55A11}
-.tt-chip.method{background:#ead1dc;color:#553c9a;border-left-color:#553c9a}
-.tt-chip.revision{background:#fefcbf;color:#744210;border-left-color:#744210}
-.tt-chip.other{background:#f2f2f2;color:#64748b;border-left-color:#94a3b8}
-/* Method overlay colors (applied as data-method attribute) */
-.tt-chip[data-method="Proteomics"]{background:#ede9fe;color:#5b21b6;border-left-color:#7c3aed}
-.tt-chip[data-method="Peptidomics"]{background:#ede9fe;color:#5b21b6;border-left-color:#7c3aed}
-.tt-chip[data-method="Peptide mapping"]{background:#ede9fe;color:#5b21b6;border-left-color:#7c3aed}
-.tt-chip[data-method="Protein identification"]{background:#ede9fe;color:#5b21b6;border-left-color:#7c3aed}
-.tt-chip[data-method="Intact & subunit"]{background:#ede9fe;color:#5b21b6;border-left-color:#7c3aed}
-.tt-chip[data-method="Metabolomics"]{background:#dbeafe;color:#1e40af;border-left-color:#3b82f6}
-.tt-chip[data-method="Metabolite identification"]{background:#dbeafe;color:#1e40af;border-left-color:#3b82f6}
-.tt-chip[data-method="Lipidomics"]{background:#d1fae5;color:#065f46;border-left-color:#10b981}
-.tt-chip[data-method="Quantification"],[data-method*="Quantification"]{background:#fef9c3;color:#854d0e;border-left-color:#f59e0b}
+/* Task type — left border accent only, emoji shows the type, no background */
+.tt-chip.data{border-left-color:#1F4E79}
+.tt-chip.prep{border-left-color:#375623}
+.tt-chip.acq{border-left-color:#C55A11}
+.tt-chip.method{border-left-color:#553c9a}
+.tt-chip.revision{border-left-color:#744210}
+.tt-chip.other{border-left-color:#94a3b8}
+/* Method overlay colors — use *=  (contains) so variants like "Quantification - Metabolite" match */
+/* These come AFTER task-type rules so same specificity = last wins */
+.tt-chip[data-method*="Proteomics"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
+.tt-chip[data-method*="Peptidomics"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
+.tt-chip[data-method*="Peptide"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
+.tt-chip[data-method*="Protein"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
+.tt-chip[data-method*="Intact"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
+.tt-chip[data-method*="Metabolomics"]{background:#dbeafe!important;color:#1e40af!important;border-left-color:#3b82f6!important}
+.tt-chip[data-method*="Metabolite"]{background:#dbeafe!important;color:#1e40af!important;border-left-color:#3b82f6!important}
+.tt-chip[data-method*="Lipidomics"]{background:#d1fae5!important;color:#065f46!important;border-left-color:#10b981!important}
+.tt-chip[data-method*="Quantification"]{background:#fef9c3!important;color:#854d0e!important;border-left-color:#f59e0b!important}
 /* Background/long-term tasks */
 .tt-chip.bg-task{opacity:.45;font-style:italic;border-style:dashed}
 /* Multi-day continuation */
@@ -742,6 +747,18 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 </div>
 
 <!-- ═══════════ TIMETABLE ═══════════ -->
+<!-- Task detail popover -->
+<div id="ttDetailPop" style="display:none;position:fixed;z-index:500;background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.15);padding:0;min-width:260px;max-width:320px;overflow:hidden">
+  <div id="ttDetailHdr" style="padding:10px 14px;background:#1F4E79;color:#fff;display:flex;justify-content:space-between;align-items:center">
+    <span id="ttDetailTitle" style="font-size:.82rem;font-weight:700"></span>
+    <button onclick="closeTTDetail()" style="background:rgba(255,255,255,.2);border:none;color:#fff;cursor:pointer;border-radius:6px;padding:2px 8px;font-size:.75rem">✕</button>
+  </div>
+  <div id="ttDetailBody" style="padding:12px 14px;font-size:.78rem;line-height:1.8"></div>
+  <div style="padding:8px 14px;border-top:1px solid #f1f5f9;display:flex;gap:6px" id="ttDetailFooter">
+    <button id="ttDetailEditBtn" onclick="ttDetailEdit()" style="flex:1;padding:6px;background:#1F4E79;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600">✏️ Edit</button>
+    <button id="ttDetailDelBtn" onclick="ttDetailDelete()" style="padding:6px 10px;background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600">🗑</button>
+  </div>
+</div>
 <div class="view" id="v-timetable">
   <!-- Nav bar -->
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
@@ -759,11 +776,11 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
   </div>
   <!-- Legend -->
   <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
-    <span style="font-size:.72rem;font-weight:700;color:#475569;margin-right:4px">Task type:</span>
-    <span style="background:#e2f0d9;color:#375623;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #375623">🧪 Sample Prep</span>
-    <span style="background:#deeaf1;color:#1F4E79;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #1F4E79">📊 Data Analysis</span>
-    <span style="background:#fce4d6;color:#C55A11;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #C55A11">⚗️ LC-MS Acquisition</span>
-    <span style="background:#fefcbf;color:#744210;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #744210">📝 Revision</span>
+    <span style="font-size:.72rem;font-weight:700;color:#475569;margin-right:4px">Task type (emoji):</span>
+    <span style="background:#f1f5f9;color:#334155;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #375623">🧪 Sample Prep</span>
+    <span style="background:#f1f5f9;color:#334155;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #1F4E79">📊 Data Analysis</span>
+    <span style="background:#f1f5f9;color:#334155;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #C55A11">⚗️ LC-MS Acquisition</span>
+    <span style="background:#f1f5f9;color:#334155;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #744210">📝 Revision</span>
     <span style="width:1px;height:16px;background:#cbd5e1;display:inline-block;margin:0 4px"></span>
     <span style="font-size:.72rem;font-weight:700;color:#475569;margin-right:4px">Method:</span>
     <span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #3b82f6">Metabolomics</span>
@@ -771,15 +788,17 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
     <span style="background:#ede9fe;color:#5b21b6;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #7c3aed">Proteomics</span>
     <span style="background:#fef9c3;color:#854d0e;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #f59e0b">Quantification</span>
     <span style="width:1px;height:16px;background:#cbd5e1;display:inline-block;margin:0 4px"></span>
-    <span style="background:#dc2626;color:#fff;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:700">STAT</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;font-size:.68rem;color:#dc2626;font-weight:700"><span style="width:9px;height:9px;border-radius:50%;background:#dc2626;display:inline-block"></span>Statistical analysis required</span>
     <span style="opacity:.45;font-style:italic;background:#f1f5f9;color:#64748b;padding:2px 9px;border-radius:8px;font-size:.68rem;border:1px dashed #cbd5e1">Background</span>
-    <span style="margin-left:8px;font-size:.68rem"><span style="background:#e0f2fe;color:#0369a1;padding:2px 7px;border-radius:8px;font-weight:600">Intern row</span></span>
-    <span style="font-size:.68rem"><span style="background:#1F4E79;color:#fff;padding:2px 7px;border-radius:8px;font-weight:600">Staff row</span></span>
+    <span style="margin-left:8px;font-size:.68rem"><span style="background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:8px;font-weight:600;border-right:3px solid #93c5fd">Staff row</span></span>
+    <span style="font-size:.68rem"><span style="background:#ede9fe;color:#5b21b6;padding:2px 7px;border-radius:8px;font-weight:600;border-right:3px solid #c4b5fd">Intern row</span></span>
+    <span style="font-size:.68rem"><span style="background:#7c3aed;color:#fff;padding:2px 7px;border-radius:8px;font-weight:600">QTOF</span></span>
+    <span style="font-size:.68rem"><span style="background:#0e7490;color:#fff;padding:2px 7px;border-radius:8px;font-weight:600">TQ</span></span>
   </div>
   <!-- ⏱ Run Time Calculator Panel -->
   <div id="rtCalcPanel" style="display:none;position:fixed;right:0;top:56px;width:360px;height:calc(100vh - 56px);background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,.15);z-index:300;overflow-y:auto;flex-direction:column">
     <div style="background:#1F4E79;color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
-      <div><div style="font-weight:700;font-size:.9rem">⏱ Run Time Calculator</div><div style="font-size:.7rem;opacity:.8">Plan your instrument schedule</div></div>
+      <div><div style="font-weight:700;font-size:.9rem">⏱ Run Time Calculator</div><div id="rtPanelWeek" style="font-size:.7rem;opacity:.8">Plan your instrument schedule</div></div>
       <button onclick="toggleRtCalc()" style="background:rgba(255,255,255,.15);border:none;color:#fff;cursor:pointer;border-radius:6px;padding:4px 9px;font-size:.8rem">✕</button>
     </div>
     <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;flex-shrink:0">
@@ -899,7 +918,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
       <div style="grid-column:1/-1;display:flex;gap:16px;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.8rem;font-weight:600">
           <input type="checkbox" id="ttNeedsStat" style="width:16px;height:16px;accent-color:#dc2626">
-          <span style="color:#dc2626">🔴 STAT — urgent processing needed</span>
+          <span style="color:#dc2626">🔴 Statistical analysis required</span>
         </label>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.8rem;font-weight:600">
           <input type="checkbox" id="ttIsBackground" style="width:16px;height:16px;accent-color:#94a3b8">
@@ -1257,7 +1276,7 @@ const DEFAULT_USERS = [
   {id:1,  username:'admin',   password:'admin123',   name:'Administrator', role:'admin',    timetable_id:''},
   {id:2,  username:'bib',     password:'bib123',     name:'Bib',           role:'manager',  timetable_id:''},
   {id:3,  username:'finance', password:'fin123',     name:'Finance Team',  role:'fin',      timetable_id:''},
-  {id:4,  username:'san',     password:'san123',     name:'San',           role:'ops',      timetable_id:'San'},
+  {id:4,  username:'maprang', password:'maprang123', name:'Maprang',        role:'ops',      timetable_id:'Maprang'},
   {id:5,  username:'alina',   password:'alina123',   name:'Alina',         role:'ops',      timetable_id:'Alina'},
   {id:6,  username:'zai',     password:'zai123',     name:'Zai',           role:'ops',      timetable_id:'Zai'},
   {id:7,  username:'kwan',    password:'kwan123',    name:'Kwan',          role:'intern',   timetable_id:'Kwan'},
@@ -1539,6 +1558,7 @@ async function loadFromFirebase(){
       if(fb.fin)      localStorage.setItem('lcms_fin',      JSON.stringify(fb.fin));
       if(fb.inq2)      localStorage.setItem('lcms_inq2',      JSON.stringify(fb.inq2));
       if(fb.timelines)  localStorage.setItem('lcms_timelines', JSON.stringify(fb.timelines));
+      if(fb.rtqueue)    { localStorage.setItem('lcms_rtqueue', JSON.stringify(fb.rtqueue)); rtQueueStore=fb.rtqueue; }
       return {
         clients:  fb.clients  || JSON.parse(JSON.stringify(SD_CLIENTS)),
         projects: fb.projects || JSON.parse(JSON.stringify(SD_PROJECTS)),
@@ -1546,6 +1566,7 @@ async function loadFromFirebase(){
         fin:      fb.fin      || JSON.parse(JSON.stringify(SD_FIN)),
         prosp:    [],
         inq2:     fb.inq2     || [],
+        timelines: fb.timelines || (localStorage.getItem('lcms_timelines') ? JSON.parse(localStorage.getItem('lcms_timelines')) : {}),
       };
     }
   } catch(e){ console.error('Firebase load failed:', e.code, e.message); }
@@ -1560,6 +1581,7 @@ function localFallback(){
     fin:      localStorage.getItem('lcms_fin')      ? JSON.parse(localStorage.getItem('lcms_fin'))      : JSON.parse(JSON.stringify(SD_FIN)),
     prosp:    [],
     inq2:     localStorage.getItem('lcms_inq2')     ? JSON.parse(localStorage.getItem('lcms_inq2'))     : [],
+    timelines: localStorage.getItem('lcms_timelines') ? JSON.parse(localStorage.getItem('lcms_timelines')) : {},
   };
 }
 // ── EXCEL IMPORT — WORK STATUS ────────────────────────────────────────────
@@ -1769,6 +1791,8 @@ async function initDashboard(){
   D = await loadFromFirebase();
   // Also load timetable & board from Firebase
   try {
+    const tlSnap = await fbDB.ref('lcms/timelines').get();
+    if(tlSnap.exists()){ D.timelines = tlSnap.val(); console.log('Timelines loaded from Firebase'); }
     const ttSnap = await fbDB.ref('lcms/timetable').get();
     if(ttSnap.exists()){ ttTasks = ttSnap.val(); console.log('Timetable loaded:', ttTasks?.length, 'tasks'); }
     else { console.warn('No timetable data in Firebase'); ttTasks = loadTTTasks(); }
@@ -1782,6 +1806,7 @@ async function initDashboard(){
       if(migrated){ saveWbCards(); }
     } else { console.warn('No wbcards in Firebase'); wbCards = loadWbCards(); }
   } catch(e){ console.error('Firebase timetable/wb load error:', e.code, e.message); ttTasks = loadTTTasks(); wbCards = loadWbCards(); }
+  const _rqs=localStorage.getItem('lcms_rtqueue'); if(_rqs) rtQueueStore=JSON.parse(_rqs);
   document.getElementById('asof').textContent = `Connected to Firebase · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
   buildYearPills('yearPills', y=>{activeYear=y; renderProjTable();});
   buildYearPills('stYearPills', y=>{activeYear=y; renderStatusGroups();});
@@ -3042,12 +3067,14 @@ function ttNav(dir){
   ttWeekStart.setDate(ttWeekStart.getDate() + dir*7);
   renderTimetable();
   renderWorkBoard();
+  if(document.getElementById('rtCalcPanel')?.style.display==='flex'){ rtLoadQueue(); rtRenderQueue(); }
 }
 
 function ttGoToday(){
   ttWeekStart = weekMonday(new Date());
   renderTimetable();
   renderWorkBoard();
+  if(document.getElementById('rtCalcPanel')?.style.display==='flex'){ rtLoadQueue(); rtRenderQueue(); }
 }
 
 function ttGetMyRow(){
@@ -3693,7 +3720,17 @@ function psSetStepStatus(status){
 }
 
 // ── RUN TIME CALCULATOR ───────────────────────────────────────────────────
+let rtQueueStore = {}; // keyed by week ISO date
 let rtQueue = [];
+
+function rtGetWeekKey(){ return ttWeekStart ? isoDate(ttWeekStart) : isoDate(weekMonday(new Date())); }
+function rtLoadQueue(){ const k=rtGetWeekKey(); rtQueue=(rtQueueStore[k]||[]); }
+function rtSaveQueue(){
+  const k=rtGetWeekKey();
+  rtQueueStore[k]=rtQueue;
+  localStorage.setItem('lcms_rtqueue', JSON.stringify(rtQueueStore));
+  if(fbAuth.currentUser) fbSave('rtqueue', rtQueueStore);
+}
 
 const RT_MINS = {
   'Metabolomics':40,'Metabolite identification':40,'Lipidomics':40,
@@ -3713,7 +3750,11 @@ function toggleRtCalc(){
   if(!p) return;
   const isOpen = p.style.display === 'flex';
   p.style.display = isOpen ? 'none' : 'flex';
-  if(!isOpen){ rtFilterProjects(); rtRenderQueue(); }
+  if(!isOpen){
+    rtLoadQueue(); rtFilterProjects(); rtRenderQueue();
+    const wl=document.getElementById('rtPanelWeek');
+    if(wl&&ttWeekStart){ const fmt=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}); const we=new Date(ttWeekStart); we.setDate(we.getDate()+6); wl.textContent='Week '+fmt(ttWeekStart)+' – '+fmt(we); }
+  }
 }
 
 function rtFilterProjects(){
@@ -3738,15 +3779,17 @@ function rtAddProject(){
   const p = (D.projects||[]).find(x=>x.id===id);
   if(!p) return;
   rtQueue.push({id, project_no:p.project_no, customer:p.customer, method:p.method||'', num_samples:p.num_samples||0});
+  rtSaveQueue();
   rtRenderQueue();
 }
 
 function rtRemove(id){
   rtQueue = rtQueue.filter(x=>x.id!==id);
+  rtSaveQueue();
   rtRenderQueue();
 }
 
-function rtClearAll(){ rtQueue=[]; rtRenderQueue(); }
+function rtClearAll(){ rtQueue=[]; rtSaveQueue(); rtRenderQueue(); }
 
 function rtCalcUpdate(){ rtRenderQueue(); }
 
@@ -3820,6 +3863,91 @@ function minsToTime(totalMins){
   const h = Math.floor(totalMins/60)%24;
   const m = totalMins%60;
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+// ── TIMETABLE TASK DETAIL POPOVER ────────────────────────────────────────
+let ttDetailTaskId = null;
+
+function openTTDetail(taskId, event){
+  event.stopPropagation();
+  ttDetailTaskId = taskId;
+  const t = ttTasks.find(x=>x.id===taskId);
+  if(!t) return;
+
+  const canEdit = currentUser && ['admin','manager','ops'].includes(currentUser.role);
+  const projs = (D.projects||[]);
+  const projIds = t.project_ids||[];
+  const linkedProjs = projIds.map(id=>projs.find(p=>p.id===id)).filter(Boolean);
+  const method = linkedProjs[0]?.method || '';
+  const totalSamples = linkedProjs.reduce((s,p)=>s+(p.num_samples||0),0);
+  const minsPerSamp = RUN_TIME[method]||0;
+  const totalMins = totalSamples * minsPerSamp;
+
+  const typeLabel = TT_TYPE_LBL[t.type]||t.type||'Task';
+  const mc = (typeof WB_METHOD_COLORS!=='undefined'&&WB_METHOD_COLORS[method])||null;
+
+  document.getElementById('ttDetailTitle').textContent = `${({data:'📊',prep:'🧪',acq:'⚗️',method:'🔬',revision:'📝',other:'🔧'}[t.type]||'📋')} ${typeLabel}`;
+  document.getElementById('ttDetailHdr').style.background = mc ? mc.text : '#1F4E79';
+
+  let body = `<div style="display:flex;flex-direction:column;gap:6px">`;
+  body += `<div><span style="color:#64748b;font-size:.72rem">📅 Date</span><br><b>${fd(t.date)}</b> (${new Date(t.date+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long'})})</div>`;
+  body += `<div><span style="color:#64748b;font-size:.72rem">👤 Assigned to</span><br><b>${t.person||'—'}</b></div>`;
+
+  if(linkedProjs.length){
+    body += `<div><span style="color:#64748b;font-size:.72rem">📁 Projects</span><br>`;
+    body += linkedProjs.map(p=>`<span style="background:${mc?mc.bg:'#f0f6ff'};color:${mc?mc.text:'#1F4E79'};padding:2px 8px;border-radius:8px;font-size:.72rem;font-weight:700;margin-right:4px">P${p.project_no}</span> ${p.customer||''} <span style="color:#94a3b8;font-size:.7rem">(${p.num_samples||0} smp)</span>`).join('<br>');
+    body += `</div>`;
+  }
+
+  if(method) body += `<div><span style="color:#64748b;font-size:.72rem">🔬 Method</span><br><span style="background:${mc?mc.bg:'#f0f6ff'};color:${mc?mc.text:'#1F4E79'};padding:2px 8px;border-radius:8px;font-size:.72rem;font-weight:700">${method}</span></div>`;
+
+  if(totalMins){
+    const h=Math.floor(totalMins/60),m=totalMins%60;
+    body += `<div><span style="color:#64748b;font-size:.72rem">⏱ Est. Run Time</span><br><b>${h>0?h+'h ':''} ${m>0?m+'m':''}</b> (${totalSamples} smp × ${minsPerSamp} min)</div>`;
+  }
+
+  if(t.needs_stat) body += `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:5px 9px;color:#b91c1c;font-size:.73rem;font-weight:600">🔴 Statistical analysis required</div>`;
+  if(t.is_background) body += `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:5px 9px;color:#64748b;font-size:.73rem;font-style:italic">Background / long-term task</div>`;
+  if(t.desc) body += `<div><span style="color:#64748b;font-size:.72rem">📝 Notes</span><br>${t.desc}</div>`;
+
+  body += '</div>';
+  document.getElementById('ttDetailBody').innerHTML = body;
+
+  const footer = document.getElementById('ttDetailFooter');
+  if(footer) footer.style.display = canEdit ? 'flex' : 'none';
+
+  // Position popover
+  const pop = document.getElementById('ttDetailPop');
+  pop.style.display = 'block';
+  const rect = event.target.getBoundingClientRect();
+  const top  = Math.min(rect.bottom + 6, window.innerHeight - 320);
+  const left = Math.min(rect.left, window.innerWidth - 330);
+  pop.style.top  = Math.max(60, top) + 'px';
+  pop.style.left = Math.max(10, left) + 'px';
+
+  setTimeout(()=>document.addEventListener('click', closeTTDetailOutside, {once:true}), 50);
+}
+
+function closeTTDetailOutside(e){
+  if(!document.getElementById('ttDetailPop').contains(e.target)) closeTTDetail();
+}
+function closeTTDetail(){
+  document.getElementById('ttDetailPop').style.display='none';
+  ttDetailTaskId = null;
+}
+function ttDetailEdit(){
+  const id = ttDetailTaskId;
+  closeTTDetail();
+  if(id) editTTTask(id);
+}
+function ttDetailDelete(){
+  const id = ttDetailTaskId;
+  if(!id||!confirm('Delete this task?')) return;
+  closeTTDetail();
+  ttTasks = ttTasks.filter(t=>t.id!==id);
+  saveTTTasks();
+  renderTimetable();
+  toast('Task deleted');
 }
 
 function renderTimetable(){
@@ -3941,12 +4069,15 @@ function renderTimetable(){
             const p=projs.find(x=>x.id===pid);
             if(!p) return '';
             const samples = p.num_samples ? `<span style="font-size:.58rem;opacity:.8"> · ${p.num_samples}smp</span>` : '';
-            return `<span class="tt-proj-tag" onclick="event.stopPropagation();ttJumpToProject(${p.id})" title="P${p.project_no} · ${p.customer||''}">P${p.project_no}${samples}</span>`;
+            const tagBg = /Proteomics|Peptidomics|Peptide|Protein|Intact/i.test(p.method||'') ? '#5b21b6' :
+                          /Metabolo|Metabolite|Lipido/i.test(p.method||'') ? '#1e40af' :
+                          /Quantif/i.test(p.method||'') ? '#92400e' : '#1F4E79';
+            return `<span class="tt-proj-tag" style="background:${tagBg}" onclick="event.stopPropagation();ttJumpToProject(${p.id})" title="P${p.project_no} · ${p.method||''}">P${p.project_no}${samples}</span>`;
           }).filter(Boolean).join('')+'</div>';
         }
 
-        // STAT badge
-        const statBadge = t.needs_stat ? `<span class="stat-badge">STAT</span>` : '';
+        // STAT dot (statistical analysis required)
+        const statBadge = t.needs_stat ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#dc2626;margin-left:4px;flex-shrink:0;vertical-align:middle" title="Statistical analysis required"></span>` : '';
 
         // Task type label (short)
         const typeShort = {data:'📊',prep:'🧪',acq:'⚗️',method:'🔬',revision:'📝',other:'🔧'}[t.type]||'';
@@ -3954,10 +4085,10 @@ function renderTimetable(){
         // Background task styling
         const bgClass = t.is_background ? ' bg-task' : '';
 
-        const editAttr = canAddEdit ? `onclick="editTTTask(${t.id})" title="Click to edit"` : `style="cursor:default"`;
+        const editAttr = `onclick="openTTDetail(${t.id},event)"`;
         const dragAttrs = canAddEdit ? `draggable="true" ondragstart="ttDragStart(event,${t.id})" ondragend="this.style.opacity='1'"` : '';
 
-        return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}${bgClass}"${methodAttr} ${editAttr} ${dragAttrs}>${typeShort} ${projIds.length?'':t.desc||''}${statBadge}${projTags}</span>`;
+        return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}${bgClass}"${methodAttr} ${editAttr} ${dragAttrs} style="position:relative">${typeShort} ${projIds.length?'':t.desc||''}${statBadge}${projTags}</span>`;
       }).join('');
       if(canAddEdit) chips += `<span class="tt-add-btn" onclick="openTTModal('${row.id}','${ds}')" title="Add task">＋</span>`;
 
@@ -3976,9 +4107,17 @@ function renderTimetable(){
     return d>=days[0] && d<=days[6];
   });
 
-  // Tasks by type
+  // Tasks by type — deduplicated by type+projects (multiple people on same task = 1)
+  const taskKeysSeen = new Set();
   const byType = {};
-  weekTasks.forEach(t=>{ byType[t.type]=(byType[t.type]||0)+1; });
+  weekTasks.forEach(t=>{
+    const key = t.type + '|' + (t.project_ids||[]).slice().sort().join(',');
+    if(!taskKeysSeen.has(key)){
+      taskKeysSeen.add(key);
+      byType[t.type]=(byType[t.type]||0)+1;
+    }
+  });
+  const uniqueTaskCount = taskKeysSeen.size;
 
   // Unique projects touched this week
   const allProjIdsThisWeek = [...new Set(weekTasks.flatMap(t=>t.project_ids||[]))];
@@ -4028,7 +4167,7 @@ function renderTimetable(){
   <div style="margin-top:16px;background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06)">
     <div style="background:linear-gradient(135deg,#1F4E79,#2E75B6);color:#fff;padding:10px 18px;display:flex;justify-content:space-between;align-items:center">
       <span style="font-weight:700;font-size:.85rem">📋 Weekly Summary — ${document.getElementById('ttWeekLabel')?.textContent||'This Week'}</span>
-      <span style="font-size:.75rem;opacity:.8">${weekTasks.length} total tasks · ${allProjIdsThisWeek.length} projects</span>
+      <span style="font-size:.75rem;opacity:.8">${uniqueTaskCount} unique tasks · ${allProjIdsThisWeek.length} projects</span>
     </div>
     <div style="padding:14px 18px">
       <!-- Task type breakdown -->
