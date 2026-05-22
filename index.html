@@ -841,12 +841,12 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 </div>
 
 <div class="ov" id="ttMov">
-  <div class="modal" style="max-width:600px">
+  <div class="modal" style="max-width:600px;display:flex;flex-direction:column;max-height:90vh">
     <div class="mhdr">
       <h3 id="ttMTitle">Add Timetable Task</h3>
       <button class="mclose" onclick="cm('ttMov')">×</button>
     </div>
-    <div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto;max-height:calc(90vh - 120px)">
       <div style="grid-column:1/-1">
         <label style="font-size:.75rem;font-weight:600;color:#475569;display:block;margin-bottom:4px">Person / Instrument</label>
         <select id="ttPerson" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem"></select>
@@ -3587,6 +3587,33 @@ function renderPsCard(p){
   const mc = (typeof WB_METHOD_COLORS!=='undefined'&&WB_METHOD_COLORS[p.method])||{bg:'#f1f5f9',text:'#475569',border:'#e2e8f0'};
   const statusBadge = `<span style="padding:2px 9px;border-radius:10px;font-size:.68rem;font-weight:600;background:#e0f2fe;color:#0369a1">${p.work_status||'—'}</span>`;
 
+  // COMPLETED STATE — all steps done, Client Report marked done
+  if(tl.completed){
+    const doneAt = tl.completed_at ? new Date(tl.completed_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+    return `<div class="ps-card" id="ps-proj-${p.id}" style="border:2px solid #166534;background:linear-gradient(135deg,#f0fdf4,#dcfce7);opacity:.92">
+      <div class="ps-card-hdr" style="background:transparent;border-bottom:1px solid #bbf7d0">
+        <span class="ps-proj-no" style="color:#166534">P${p.project_no}</span>
+        <span style="font-weight:600;font-size:.82rem;color:#166534;text-decoration:line-through;opacity:.7">${p.customer||'—'}</span>
+        <span class="ps-method-badge" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${p.method||'—'}</span>
+        <span style="font-size:.72rem;color:#166534">${p.num_samples||0} samples</span>
+        <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+          <span style="padding:2px 10px;border-radius:10px;font-size:.72rem;font-weight:700;background:#166534;color:#fff">✅ Week Complete</span>
+          <button onclick="psUncomplete(${p.id},event)" style="padding:2px 9px;border-radius:8px;border:1px solid #86efac;background:#fff;color:#166534;font-size:.68rem;font-weight:600;cursor:pointer">↩ Undo</button>
+        </span>
+      </div>
+      <div style="padding:14px 20px;display:flex;align-items:center;gap:14px">
+        <span style="font-size:2.2rem">✅</span>
+        <div>
+          <div style="font-weight:700;color:#166534;font-size:.88rem">All steps completed!</div>
+          <div style="font-size:.72rem;color:#4ade80;margin-top:2px">${doneAt ? 'Completed ' + doneAt : 'Completed this week'}</div>
+          <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
+            ${PS_STEPS.map(s=>`<span style="padding:2px 8px;border-radius:8px;background:#dcfce7;color:#166534;font-size:.65rem;font-weight:600;border:1px solid #bbf7d0">${s.emoji} ${s.label}</span>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
   // Determine timeline line progress
   const stepStatuses = PS_STEPS.map(s=>(tl.steps[s.id]||{}).status||'pending');
   const lastDone = stepStatuses.lastIndexOf('done');
@@ -3663,7 +3690,23 @@ function openPsPopover(projId, stepId, event){
   const st = tl.steps[stepId]||{status:'pending',assignees:[]};
   const users = loadUsers().filter(u=>u.timetable_id);
 
+  const isLastStep = stepId === PS_STEPS[PS_STEPS.length-1].id;
   document.getElementById('psPopTitle').textContent = `${step.emoji} ${step.label}`;
+  // Highlight "Done" button if this is the final step (will archive project)
+  const doneBtn = document.querySelector('#psPopover button[onclick="psSetStepStatus('done')"]');
+  if(doneBtn){
+    if(isLastStep){
+      doneBtn.textContent = '✅ Done — Complete Project!';
+      doneBtn.style.background='#166534';
+      doneBtn.style.color='#fff';
+      doneBtn.style.borderColor='#166534';
+    } else {
+      doneBtn.textContent = '✓ Done';
+      doneBtn.style.background='#dcfce7';
+      doneBtn.style.color='#166534';
+      doneBtn.style.borderColor='#bbf7d0';
+    }
+  }
   document.getElementById('psPopUsers').innerHTML = users.map(u=>{
     const assigned = (st.assignees||[]).includes(u.name);
     const idx = getUserColorIdx(u.name);
@@ -3676,8 +3719,15 @@ function openPsPopover(projId, stepId, event){
   const pop = document.getElementById('psPopover');
   pop.style.display = 'block';
   const rect = event.target.getBoundingClientRect();
-  const top = Math.min(rect.bottom + 6, window.innerHeight - 280);
-  const left = Math.min(rect.left, window.innerWidth - 220);
+  const popH = pop.offsetHeight || 320;
+  const popW = pop.offsetWidth || 220;
+  let top = rect.bottom + 6;
+  let left = rect.left;
+  // Flip above if not enough room below
+  if (top + popH > window.innerHeight - 10) top = Math.max(10, rect.top - popH - 6);
+  // Clamp horizontally
+  if (left + popW > window.innerWidth - 10) left = window.innerWidth - popW - 10;
+  if (left < 10) left = 10;
   pop.style.top = top + 'px';
   pop.style.left = left + 'px';
 
@@ -3718,9 +3768,38 @@ function psSetStepStatus(status){
     PS_STEPS.forEach(s=>{ if(tl.steps[s.id]&&tl.steps[s.id].status==='current') tl.steps[s.id].status='pending'; });
   }
   tl.steps[stepId].status = status;
+
+  // If the final step (Client Report) is marked done and all steps done -> archive as complete
+  const lastStep = PS_STEPS[PS_STEPS.length - 1];
+  if(stepId === lastStep.id && status === 'done'){
+    const allDone = PS_STEPS.every(s=>(tl.steps[s.id]||{}).status==='done');
+    if(allDone){
+      tl.completed = true;
+      tl.completed_at = new Date().toISOString();
+      setTimeout(()=>toast('🎉 Project marked as fully complete!'), 50);
+    }
+  }
+  // If un-marking done on final step, clear completed flag
+  if(stepId === lastStep.id && status !== 'done'){
+    tl.completed = false;
+  }
+
+  saveTimelines();
+  closePsPopover();
+  const card = document.getElementById(`ps-proj-${projId}`);
+  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
+}
+
+function psUncomplete(projId, event){
+  if(event) event.stopPropagation();
+  const tl = getTimeline(projId);
+  tl.completed = false;
+  const lastStep = PS_STEPS[PS_STEPS.length - 1];
+  if(tl.steps[lastStep.id]) tl.steps[lastStep.id].status = 'current';
   saveTimelines();
   const card = document.getElementById(`ps-proj-${projId}`);
   if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
+  toast('Completion undone — project back in progress');
 }
 
 // ── RUN TIME CALCULATOR ───────────────────────────────────────────────────
@@ -4145,17 +4224,23 @@ function renderTimetable(){
     return d>=days[0] && d<=days[6];
   });
 
-  // Tasks by type — deduplicated by type+projects (multiple people on same task = 1)
-  const taskKeysSeen = new Set();
+  // Tasks by type — count UNIQUE PROJECTS per task type
+  // e.g. P557 run by 2 people = 1 project doing acq, not 2 tasks
+  // "LC-MS Acquisition: 7" means 7 distinct projects had acq tasks this week
   const byType = {};
+  const projsByType = {}; // type -> Set of project ids
   weekTasks.forEach(t=>{
-    const key = t.type + '|' + (t.project_ids||[]).slice().sort().join(',');
-    if(!taskKeysSeen.has(key)){
-      taskKeysSeen.add(key);
-      byType[t.type]=(byType[t.type]||0)+1;
+    const ids = t.project_ids||[];
+    if(!projsByType[t.type]) projsByType[t.type] = new Set();
+    if(ids.length){
+      ids.forEach(id => projsByType[t.type].add(id));
+    } else {
+      // Task with no project linked — count it as a unique "no-project" entry per type+date+person
+      projsByType[t.type].add('noproj|'+t.date+'|'+t.person);
     }
   });
-  const uniqueTaskCount = taskKeysSeen.size;
+  Object.entries(projsByType).forEach(([type, set])=>{ byType[type] = set.size; });
+  const uniqueTaskCount = Object.values(byType).reduce((a,b)=>a+b, 0);
 
   // Unique projects touched this week
   const allProjIdsThisWeek = [...new Set(weekTasks.flatMap(t=>t.project_ids||[]))];
@@ -4464,8 +4549,8 @@ function editTTTask(id){
   const projIds = t.project_ids||[];
   ttPopulateProjectList(projIds);
   document.getElementById('ttDelBtn').style.display='inline-flex';
-  const statEl2=document.getElementById('ttNeedsStat'); if(statEl2) statEl2.checked=!!(task.needs_stat);
-  const bgEl2=document.getElementById('ttIsBackground'); if(bgEl2) bgEl2.checked=!!(task.is_background);
+  const statEl2=document.getElementById('ttNeedsStat'); if(statEl2) statEl2.checked=!!(t.needs_stat);
+  const bgEl2=document.getElementById('ttIsBackground'); if(bgEl2) bgEl2.checked=!!(t.is_background);
   document.getElementById('ttMov').classList.add('open');
 }
 
