@@ -608,6 +608,23 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 
 <!-- ═══════════ WORK STATUS ═══════════ -->
 <div id="v-status" class="view active">
+
+  <!-- ── PROJECTS ON HOLD BOARD ── -->
+  <div id="holdBoard" style="background:#fff;border:2px solid #f59e0b;border-radius:14px;margin-bottom:18px;box-shadow:0 2px 8px rgba(245,158,11,.12)">
+    <div style="background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:12px 12px 0 0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <span style="font-weight:700;color:#fff;font-size:.88rem">⏸ Projects on Hold</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input id="holdInput" type="text" placeholder="Type project no. (e.g. 406) + Enter"
+          style="padding:5px 10px;border:none;border-radius:7px;font-size:.78rem;width:220px;outline:none"
+          onkeydown="if(event.key==='Enter')holdAdd()">
+        <button onclick="holdAdd()" style="padding:5px 12px;background:#fff;color:#92400e;border:none;border-radius:7px;font-weight:700;font-size:.78rem;cursor:pointer">+ Add</button>
+      </div>
+    </div>
+    <div id="holdItems" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px;min-height:44px;align-items:center">
+      <span id="holdEmpty" style="color:#d97706;font-size:.78rem;font-style:italic">No projects on hold — add project numbers above</span>
+    </div>
+  </div>
+
   <div class="ypills" id="stYearPills"></div>
   <div id="stGrps"></div>
 </div>
@@ -860,7 +877,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
       <h3 id="ttMTitle">Add Timetable Task</h3>
       <button class="mclose" onclick="cm('ttMov')">×</button>
     </div>
-    <div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto;max-height:calc(90vh - 120px)">
+    <div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto;max-height:calc(90vh - 120px);flex:1;min-height:0">
       <div style="grid-column:1/-1">
         <label style="font-size:.75rem;font-weight:600;color:#475569;display:block;margin-bottom:4px">Person / Instrument</label>
         <select id="ttPerson" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem"></select>
@@ -958,7 +975,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
       </div>
       <input type="hidden" id="ttEditId">
     </div>
-    <div class="mfoot" style="padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;gap:8px;align-items:center">
+    <div class="mfoot" style="padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-shrink:0">
       <button class="btn bdel" id="ttDelBtn" onclick="delTTTask()" style="display:none">🗑 Delete</button>
       <div style="display:flex;gap:8px">
         <button class="btn" style="background:#f1f5f9;color:#475569" onclick="cm('ttMov')">Cancel</button>
@@ -1468,7 +1485,7 @@ function applyRole(role){
   pill.textContent={admin:'Admin',manager:'Manager',ops:'Operations',fin:'Finance',intern:'Intern'}[role]||role;
   pill.className='role-pill rp-'+role;
 }
-function canEdit(){ return currentUser&&['admin','manager'].includes(currentUser.role); }
+function canEdit(){ return currentUser&&['admin','manager','ops'].includes(currentUser.role); }
 function isAdmin(){ return currentUser&&currentUser.role==='admin'; }
 
 // ── USER MANAGEMENT ───────────────────────────────────────────────────────
@@ -1863,7 +1880,7 @@ async function initDashboard(){
   if(currentUser){
     const role=currentUser.role;
     const startTab = (role==='fin') ? 'dash'
-                   : (role==='manager'||role==='admin') ? 'status'
+                   : (role==='manager'||role==='admin'||role==='ops') ? 'status'
                    : 'status'; // ops, intern all start on Work Status
     const tabEl=document.querySelector('.tab.active');
     const viewEl=document.querySelector('.view.active');
@@ -1957,6 +1974,59 @@ function sw(id,el){
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
 
+// ── PROJECTS ON HOLD BOARD ────────────────────────────────────────────────
+function holdLoad(){ try{ return JSON.parse(localStorage.getItem('lcms_hold')||'[]'); }catch(e){ return []; } }
+function holdSave(arr){ localStorage.setItem('lcms_hold', JSON.stringify(arr)); }
+
+function holdRender(){
+  const items = holdLoad();
+  const container = document.getElementById('holdItems');
+  const emptyMsg  = document.getElementById('holdEmpty');
+  if(!container) return;
+  if(!items.length){
+    container.innerHTML = '<span id="holdEmpty" style="color:#d97706;font-size:.78rem;font-style:italic">No projects on hold — add project numbers above</span>';
+    return;
+  }
+  const projs = (D && D.projects) || [];
+  container.innerHTML = items.map(code=>{
+    const p = projs.find(x=>String(x.project_no)===String(code));
+    const label = p ? `P${p.project_no} · ${p.customer||''}` : `P${code}`;
+    const detail = p ? ` <span style="font-size:.68rem;opacity:.75;margin-left:2px">${(p.method||'').slice(0,22)}${p.num_samples?' · '+p.num_samples+' smp':''}</span>` : '';
+    const statusColor = p ? ({
+      'LC-MS acquisition':'#1F4E79','Data analysis':'#C55A11','Sample received':'#375623',
+      'Waiting for samples':'#6d28d9','Project completed':'#166534','Cancel':'#991b1b'
+    }[p.work_status]||'#92400e') : '#92400e';
+    return `<span style="display:inline-flex;align-items:center;gap:5px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:20px;padding:4px 10px 4px 12px;font-size:.78rem;font-weight:600;color:${statusColor}">
+      ${label}${detail}
+      <button onclick="holdRemove('${code}')" title="Remove from hold" style="background:none;border:none;cursor:pointer;color:#f59e0b;font-size:.85rem;padding:0 0 0 4px;line-height:1">✕</button>
+    </span>`;
+  }).join('');
+}
+
+function holdAdd(){
+  const input = document.getElementById('holdInput');
+  if(!input) return;
+  const raw = input.value.trim().replace(/^[Pp]/,'');
+  if(!raw){ toast('Enter a project number'); return; }
+  const items = holdLoad();
+  if(items.includes(raw)){ toast('Already on the hold board'); input.value=''; return; }
+  // Verify it exists in D.projects (warn but allow)
+  const projs = (D && D.projects) || [];
+  const found = projs.find(x=>String(x.project_no)===String(raw));
+  if(!found){ toast(`⚠️ P${raw} not found in projects — added anyway`); }
+  items.push(raw);
+  holdSave(items);
+  holdRender();
+  input.value='';
+  if(found) toast(`⏸ P${raw} · ${found.customer||''} added to hold board`);
+}
+
+function holdRemove(code){
+  const items = holdLoad().filter(x=>x!==code);
+  holdSave(items);
+  holdRender();
+}
+
 // ── WORK TABLE TOGGLE ─────────────────────────────────────────────────────
 let workTableOpen = false;
 function toggleWorkTable(){
@@ -1992,12 +2062,10 @@ function renderDash(){
   `;
 
   const pct=Math.min((ti/REV_GOAL)*100,100);
-  if(!document.body.classList.contains('role-ops')){
   document.getElementById('pbF').style.width=pct+'%';
   document.getElementById('pbP').textContent=pct.toFixed(1)+'%';
   document.getElementById('pbC').textContent='Collected: '+fb(ti);
   document.getElementById('pbG').textContent='Goal: '+fb(REV_GOAL);
-  }
 
   const stO=['Project completed','Waiting for samples','Data analysis','Sample received','LC-MS acquisition','Cancel'];
   document.getElementById('stTbl').innerHTML=stO.map(k=>{const d=g(byS,k);return`<tr><td>${sb(k)}</td><td style="font-weight:700">${d.cnt}</td><td class="tr amt">${fb(d.val)}</td><td class="tr">${total?((d.cnt/total)*100).toFixed(0)+'%':'-'}</td></tr>`;}).join('')+
@@ -2202,6 +2270,7 @@ function srt(col,el){
 
 // ── STATUS GROUPS ─────────────────────────────────────────────────────────
 function renderStatusGroups(){
+  holdRender();
   const ps=filteredProjects();
   const grps=[
     {key:'LC-MS acquisition',lbl:'LC-MS Acquisition',cls:'sh-purple'},
@@ -3623,12 +3692,29 @@ function renderProjStatus(){
     return;
   }
 
-  grid.innerHTML = projects.map(p => renderPsCard(p)).join('');
+  // Split into QTOF (non-TQ) and TQ groups — TQ goes at the bottom in yellow
+  const isTQ = p => (p.system||'').toUpperCase() === 'TQ' ||
+                    /quantif/i.test(p.method||'');
+  const qtofProjs = projects.filter(p => !isTQ(p));
+  const tqProjs   = projects.filter(p =>  isTQ(p));
+
+  let html = qtofProjs.map(p => renderPsCard(p)).join('');
+  if(tqProjs.length){
+    html += `<div style="margin:18px 0 10px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1;height:2px;background:linear-gradient(to right,#fde68a,transparent)"></div>
+      <span style="background:#fef9c3;color:#854d0e;border:1.5px solid #fde68a;border-radius:10px;padding:3px 14px;font-size:.75rem;font-weight:700">⚡ TQ / Quantification Projects</span>
+      <div style="flex:1;height:2px;background:linear-gradient(to left,#fde68a,transparent)"></div>
+    </div>`;
+    html += tqProjs.map(p => renderPsCard(p, true)).join('');
+  }
+  grid.innerHTML = html;
 }
 
-function renderPsCard(p){
+function renderPsCard(p, isTQCard=false){
   const tl = getTimeline(p.id);
   const mc = (typeof WB_METHOD_COLORS!=='undefined'&&WB_METHOD_COLORS[p.method])||{bg:'#f1f5f9',text:'#475569',border:'#e2e8f0'};
+  // TQ card yellow tint
+  const tqCardStyle = isTQCard ? 'border-color:#fde68a;background:linear-gradient(135deg,#fffbeb,#fef9c3);' : '';
   const statusBadge = `<span style="padding:2px 9px;border-radius:10px;font-size:.68rem;font-weight:600;background:#e0f2fe;color:#0369a1">${p.work_status||'—'}</span>`;
 
   // COMPLETED STATE — all steps done, Client Report marked done
@@ -3689,7 +3775,7 @@ function renderPsCard(p){
     return `<div style="flex:1;height:3px;background:${color};align-self:auto;margin-top:18px;position:relative;z-index:0"></div>`;
   }).join('');
 
-  return `<div class="ps-card" id="ps-proj-${p.id}">
+  return `<div class="ps-card" id="ps-proj-${p.id}" style="${tqCardStyle}">
     <div class="ps-card-hdr">
       <span class="ps-proj-no">P${p.project_no}</span>
       <span style="font-weight:600;font-size:.82rem;color:#1e293b">${p.customer||'—'}</span>
@@ -3799,7 +3885,7 @@ function psToggleUser(name, checked){
   saveTimelines();
   // Re-render just this card
   const card = document.getElementById(`ps-proj-${projId}`);
-  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
+  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj){ const _isTQ=(proj.system||'').toUpperCase()==='TQ'||/quantif/i.test(proj.method||''); card.outerHTML=renderPsCard(proj, _isTQ); } }
 }
 
 function psSetStepStatus(status){
@@ -3831,7 +3917,7 @@ function psSetStepStatus(status){
   saveTimelines();
   closePsPopover();
   const card = document.getElementById(`ps-proj-${projId}`);
-  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
+  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj){ const _isTQ=(proj.system||'').toUpperCase()==='TQ'||/quantif/i.test(proj.method||''); card.outerHTML=renderPsCard(proj, _isTQ); } }
 }
 
 function psUncomplete(projId, event){
@@ -3842,7 +3928,7 @@ function psUncomplete(projId, event){
   if(tl.steps[lastStep.id]) tl.steps[lastStep.id].status = 'current';
   saveTimelines();
   const card = document.getElementById(`ps-proj-${projId}`);
-  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
+  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj){ const _isTQ=(proj.system||'').toUpperCase()==='TQ'||/quantif/i.test(proj.method||''); card.outerHTML=renderPsCard(proj, _isTQ); } }
   toast('Completion undone — project back in progress');
 }
 
@@ -4212,9 +4298,7 @@ function renderTimetable(){
     const ds = isoDate(d);
     const isWkend = i>=5;
     const isToday = ds===todayStr;
-    const canCopy = (currentUser && ['admin','manager'].includes(currentUser.role));
-    const copyBtn = canCopy ? `<span onclick="ttOpenCopyDay('${ds}',event)" title="Copy all tasks from this day to other days" style="display:inline-block;margin-left:5px;cursor:pointer;font-size:.7rem;opacity:.7;vertical-align:middle;background:rgba(255,255,255,.18);border-radius:4px;padding:0 4px;line-height:1.5" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'">📋</span>` : '';
-    html += `<th style="${isWkend?'background:#3a3a5c;':''}${isToday?'background:#C55A11;':{}}"><span style="display:flex;align-items:center;justify-content:center;gap:2px">${DAYS[i]}${copyBtn}</span><span style="font-weight:400;font-size:.65rem;opacity:.85">${d.getDate()}/${d.getMonth()+1}</span></th>`;
+    html += `<th style="${isWkend?'background:#3a3a5c;':''}${isToday?'background:#C55A11;':''}">${DAYS[i]}<br><span style="font-weight:400;font-size:.65rem;opacity:.85">${d.getDate()}/${d.getMonth()+1}</span></th>`;
   });
   html += `</tr></thead><tbody>`;
 
@@ -4255,7 +4339,7 @@ function renderTimetable(){
       if(isWkend) cellCls += ' weekend';
       if(isToday) cellCls += ' today';
 
-      const canAddEdit = (currentUser && ['admin','manager'].includes(currentUser.role)) || isMyRow;
+      const canAddEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || isMyRow;
       let chips = tasks.map(t=>{
         const projIds = t.project_ids||[];
         const projs = (D&&D.projects)||[];
@@ -4295,6 +4379,7 @@ function renderTimetable(){
         return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}${bgClass}"${methodAttr} ${editAttr} ${dragAttrs} style="position:relative">${typeShort} ${projIds.length?'':t.desc||''}${recurringBadge||''}${statBadge}${projTags}</span>`;
       }).join('');
       if(canAddEdit) chips += `<span class="tt-add-btn" onclick="openTTModal('${row.id}','${ds}')" title="Add task">＋</span>`;
+      if(canAddEdit && tasks.length) chips += `<span class="tt-add-btn" onclick="ttOpenCopyDay('${row.id}','${ds}',event)" title="Copy ${row.label}'s tasks from this day to other days" style="color:#1F4E79">📋</span>`;
 
       const dropAttrs = canAddEdit ? `ondragover="ttDragOver(event)" ondrop="ttDrop(event,'${row.id}','${ds}')" ondragleave="ttDragLeave(event)"` : '';
       html += `<td class="${cellCls}" ${dropAttrs}>${chips}</td>`;
@@ -4645,42 +4730,45 @@ function editTTTask(id){
   document.getElementById('ttMov').classList.add('open');
 }
 
-// ── COPY DAY ─────────────────────────────────────────────────────────────
-let ttCopyDaySource = null;
+// ── COPY DAY (per person) ────────────────────────────────────────
+let ttCopyDaySource = null; // { personId, dateStr }
 
-function ttOpenCopyDay(dateStr, event){
+function ttOpenCopyDay(personId, dateStr, event){
   if(event) event.stopPropagation();
-  ttCopyDaySource = dateStr;
+  ttCopyDaySource = { personId, dateStr };
   if(!ttTasks) ttTasks = loadTTTasks();
 
-  const srcTasks = ttTasks.filter(t=>t.date===dateStr);
-  if(!srcTasks.length){ toast('No tasks on this day to copy'); return; }
+  const srcTasks = ttTasks.filter(t=>t.person===personId && t.date===dateStr);
+  if(!srcTasks.length){ toast('No tasks on this cell to copy'); return; }
 
-  // Build week days list as targets (exclude source day)
+  const personRows = getTTPersonRows();
+  const instrRows = TEAM_ROWS.filter(r=>r.type==='instrument');
+  const allRows = [...personRows, ...instrRows];
+  const row = allRows.find(r=>r.id===personId);
+  const personLabel = row ? row.label : personId;
+
   const ws = ttWeekStart || weekMonday(new Date());
   const days = [];
   for(let i=0;i<7;i++){
-    const d = new Date(ws);
-    d.setDate(d.getDate()+i);
-    days.push(d);
+    const d = new Date(ws); d.setDate(d.getDate()+i); days.push(d);
   }
 
   const srcDate = new Date(dateStr+'T00:00:00');
   const fmtDay = d => d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
 
-  document.getElementById('ttCopyDayFrom').textContent = fmtDay(srcDate) + ` (${srcTasks.length} task${srcTasks.length!==1?'s':''})`;
+  document.getElementById('ttCopyDayTitle').textContent = `📋 Copy ${personLabel}'s Tasks`;
+  document.getElementById('ttCopyDayFrom').textContent = fmtDay(srcDate) + ` — ${srcTasks.length} task${srcTasks.length!==1?'s':''}`;
 
-  // Build checkboxes for target days
   let html = '';
   days.forEach(d=>{
     const ds = isoDate(d);
-    if(ds===dateStr) return; // skip source
-    const existing = ttTasks.filter(t=>t.date===ds).length;
-    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:1.5px solid #e2e8f0;cursor:pointer;font-size:.82rem;font-weight:500;color:#1e293b" 
+    if(ds===dateStr) return;
+    const existing = ttTasks.filter(t=>t.person===personId && t.date===ds).length;
+    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:1.5px solid #e2e8f0;cursor:pointer;font-size:.82rem;font-weight:500;color:#1e293b"
       onmouseover="this.style.borderColor='#1F4E79'" onmouseout="this.style.borderColor=this.querySelector('input').checked?'#1F4E79':'#e2e8f0'">
       <input type="checkbox" value="${ds}" style="accent-color:#1F4E79;width:15px;height:15px" onchange="this.parentElement.style.borderColor=this.checked?'#1F4E79':'#e2e8f0'">
       <span style="flex:1">${fmtDay(d)}</span>
-      ${existing?`<span style="font-size:.68rem;color:#94a3b8">${existing} existing</span>`:'<span style="font-size:.68rem;color:#94a3b8">empty</span>'}
+      ${existing ? `<span style="font-size:.68rem;color:#94a3b8">${existing} task${existing!==1?'s':''} already</span>` : '<span style="font-size:.68rem;color:#bbf7d0;background:#f0fdf4;padding:1px 6px;border-radius:6px">empty</span>'}
     </label>`;
   });
   document.getElementById('ttCopyDayTargets').innerHTML = html;
@@ -4689,28 +4777,23 @@ function ttOpenCopyDay(dateStr, event){
 
 function ttExecuteCopyDay(){
   if(!ttCopyDaySource) return;
+  const { personId, dateStr } = ttCopyDaySource;
   const checked = [...document.querySelectorAll('#ttCopyDayTargets input:checked')].map(el=>el.value);
   if(!checked.length){ toast('Select at least one target day'); return; }
 
-  const srcTasks = ttTasks.filter(t=>t.date===ttCopyDaySource);
+  const srcTasks = ttTasks.filter(t=>t.person===personId && t.date===dateStr);
   let copied = 0, skipped = 0;
 
   checked.forEach(targetDate=>{
     srcTasks.forEach(src=>{
-      // Skip duplicate: same person + type + same project_ids on that day
       const projKey = (src.project_ids||[]).slice().sort().join(',');
       const isDup = ttTasks.some(t=>
-        t.date===targetDate &&
-        t.person===src.person &&
+        t.date===targetDate && t.person===personId &&
         t.type===src.type &&
         (t.project_ids||[]).slice().sort().join(',')===projKey
       );
       if(isDup){ skipped++; return; }
-      ttTasks.push({
-        ...src,
-        id: ttNextId(),
-        date: targetDate
-      });
+      ttTasks.push({ ...src, id: ttNextId(), date: targetDate });
       copied++;
     });
   });
@@ -4718,7 +4801,8 @@ function ttExecuteCopyDay(){
   saveTTTasks();
   cm('ttCopyDayOv');
   renderTimetable();
-  toast(`✅ Copied ${copied} task${copied!==1?'s':''}${skipped?' ('+skipped+' duplicate'+( skipped!==1?'s':'')+' skipped)':''} to ${checked.length} day${checked.length!==1?'s':''}`);
+  const skipNote = skipped ? ` (${skipped} duplicate${skipped!==1?'s':''} skipped)` : '';
+  toast(`✅ Copied ${copied} task${copied!==1?'s':''}${skipNote} to ${checked.length} day${checked.length!==1?'s':''}`);
 }
 
 function delTTTask(){
