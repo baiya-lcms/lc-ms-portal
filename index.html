@@ -1354,8 +1354,7 @@ function doLogin(){
   const p=document.getElementById('luPass').value;
   const err=document.getElementById('loginErr');
   if(!u||!p){err.textContent='Please enter username and password';return;}
-  
-  // Fetch latest users from Firebase first, then check credentials
+
   const attemptLogin = (users) => {
     const found=users.find(x=>x.username===u&&x.password===p);
     if(found){
@@ -1363,22 +1362,27 @@ function doLogin(){
       sessionStorage.setItem('lcms_session',JSON.stringify(found));
       document.getElementById('loginOv').style.display='none';
       applyRole(found.role);
+      // initDashboard immediately — don't wait for Firebase Auth
+      initDashboard();
+      // Firebase Auth happens silently in background for data sync
       fbSignIn(u, p).then(()=>{
-        console.log('Firebase currentUser after login:', fbAuth.currentUser?.email);
-        const allUsers = loadUsers();
-        fbSave('users', allUsers);
-        initDashboard();
-      });
+        console.log('Firebase Auth OK:', fbAuth.currentUser?.email);
+        fbSave('users', loadUsers());
+      }).catch(e=>console.warn('Firebase Auth background error:', e));
     } else {
       err.textContent='Invalid username or password';
       document.getElementById('luPass').value='';
     }
   };
 
-  // Try to get fresh users from Firebase
-  fbDB.ref('lcms/users').once('value')
+  // Try Firebase users first (with short timeout), fall back to local
+  const timeout = new Promise((_,rej)=>setTimeout(()=>rej('timeout'),3000));
+  Promise.race([
+    fbDB.ref('lcms/users').once('value'),
+    timeout
+  ])
     .then(snap => {
-      if(snap.exists() && snap.val()?.length > 0){
+      if(snap && snap.exists && snap.exists() && snap.val()?.length > 0){
         const fbUsers = snap.val();
         localStorage.setItem('lcms_users', JSON.stringify(fbUsers));
         attemptLogin(fbUsers);
@@ -1386,7 +1390,7 @@ function doLogin(){
         attemptLogin(loadUsers());
       }
     })
-    .catch(() => attemptLogin(loadUsers())); // fallback to local if Firebase unreachable
+    .catch(() => attemptLogin(loadUsers()));
 }
 function doLogout(){
   sessionStorage.removeItem('lcms_session');
@@ -1408,9 +1412,10 @@ async function checkAuth(){
     sessionStorage.setItem('lcms_session',JSON.stringify(fresh));
     document.getElementById('loginOv').style.display='none';
     applyRole(fresh.role);
-    // Wait for Firebase Auth before loading data
-    await fbSignIn(fresh.username, fresh.password||saved.password||'');
-    console.log('Firebase currentUser after checkAuth:', fbAuth.currentUser?.email);
+    // Firebase Auth in background — don't block dashboard load
+    fbSignIn(fresh.username, fresh.password||saved.password||'')
+      .then(()=>console.log('Firebase Auth OK (checkAuth):', fbAuth.currentUser?.email))
+      .catch(e=>console.warn('Firebase Auth background error:', e));
     return true;
   }
   return false;
@@ -3693,7 +3698,7 @@ function openPsPopover(projId, stepId, event){
   const isLastStep = stepId === PS_STEPS[PS_STEPS.length-1].id;
   document.getElementById('psPopTitle').textContent = `${step.emoji} ${step.label}`;
   // Highlight "Done" button if this is the final step (will archive project)
-  const doneBtn = document.querySelector('#psPopover button[onclick="psSetStepStatus('done')"]');
+  const doneBtn = document.querySelector("#psPopover button[onclick=\"psSetStepStatus('done')\"]");
   if(doneBtn){
     if(isLastStep){
       doneBtn.textContent = '✅ Done — Complete Project!';
