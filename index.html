@@ -292,7 +292,21 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .tt-table tr.tt-tq-row td.tt-day{background:#fffbeb}
 .tt-table tr.tt-tq-row td.tt-day:hover{background:#fde68a55}
 /* Background/long-term tasks */
-.tt-chip.bg-task{opacity:.45;font-style:italic;border-style:dashed}
+.tt-chip.bg-task{
+  opacity:.55;font-style:italic;
+  background:#f1f5f9!important;
+  color:#94a3b8!important;
+  border:1.5px dashed #cbd5e1!important;
+  border-left:3px dashed #94a3b8!important;
+  box-shadow:none!important;
+  border-radius:10px!important;
+  filter:grayscale(.6);
+}
+.tt-chip.bg-task .tt-proj-tag{
+  background:#94a3b8!important;
+  color:#fff!important;
+  opacity:.75;
+}
 /* Multi-day continuation */
 .tt-chip.continues{border-right:none;border-radius:6px 0 0 6px;margin-right:-2px}
 .tt-chip.continuation{border-left:none;border-radius:0 6px 6px 0;opacity:.85;font-style:italic}
@@ -925,9 +939,15 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
           <span style="color:#dc2626">🔴 Statistical analysis required</span>
         </label>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.8rem;font-weight:600">
-          <input type="checkbox" id="ttIsBackground" style="width:16px;height:16px;accent-color:#94a3b8">
-          <span style="color:#64748b">Background / long-term task</span>
+          <input type="checkbox" id="ttIsBackground" style="width:16px;height:16px;accent-color:#94a3b8" onchange="document.getElementById('ttRecurringWrap').style.display=this.checked?'flex':'none'">
+          <span style="color:#64748b">🔁 Background / recurring task</span>
         </label>
+        <span id="ttRecurringWrap" style="display:none;align-items:center;gap:6px">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.78rem;color:#475569">
+            <input type="checkbox" id="ttIsRecurring" style="width:14px;height:14px;accent-color:#475569">
+            <span>Repeat every week automatically</span>
+          </label>
+        </span>
       </div>
       <!-- Run time calculator -->
       <div style="grid-column:1/-1" id="tt_runtime_box" style="display:none">
@@ -949,6 +969,25 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 </div>
 
 </div><!-- /main -->
+
+<!-- COPY DAY MODAL -->
+<div class="ov" id="ttCopyDayOv">
+  <div class="modal" style="max-width:420px">
+    <div class="mhdr">
+      <h3 id="ttCopyDayTitle">📋 Copy Tasks</h3>
+      <button class="mclose" onclick="cm('ttCopyDayOv')">×</button>
+    </div>
+    <div style="padding:18px 20px">
+      <div style="font-size:.78rem;color:#475569;margin-bottom:4px">Copy all tasks from <strong id="ttCopyDayFrom"></strong> to:</div>
+      <div style="font-size:.7rem;color:#94a3b8;margin-bottom:12px">Existing tasks on destination days are kept — duplicates (same person, project, type) are skipped.</div>
+      <div id="ttCopyDayTargets" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn" style="flex:1;background:#f1f5f9;color:#475569" onclick="cm('ttCopyDayOv')">Cancel</button>
+        <button class="btn" style="flex:1;background:#1F4E79;color:#fff" onclick="ttExecuteCopyDay()">📋 Copy Tasks</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- CLIENT PROFILE PANEL (slide-in) -->
 <div class="cp-overlay" id="cpOv" onclick="if(event.target===this)closeCPPanel()">
@@ -4071,9 +4110,49 @@ function ttDetailDelete(){
   toast('Task deleted');
 }
 
+function ttInjectRecurringTasks(){
+  // Auto-populate recurring background tasks for the current viewed week
+  if(!ttTasks) return;
+  const ws = ttWeekStart || weekMonday(new Date());
+  const weekDates = [];
+  for(let i=0;i<7;i++){
+    const d = new Date(ws); d.setDate(d.getDate()+i);
+    weekDates.push(isoDate(d));
+  }
+  // Find all recurring tasks — use any week's instance as the template
+  const recurring = ttTasks.filter(t=>t.recurring && t.is_background);
+  let added = 0;
+  recurring.forEach(template=>{
+    // Find which day-of-week this task runs on (0=Mon…6=Sun based on its stored date)
+    const srcDate = new Date(template.date+'T00:00:00');
+    const dow = (srcDate.getDay()+6)%7; // 0=Mon, 6=Sun
+    const targetDate = weekDates[dow];
+    if(!targetDate) return;
+    // Check if already exists for this week (same person, type, projects, day)
+    const projKey = (template.project_ids||[]).slice().sort().join(',');
+    const exists = ttTasks.some(t=>
+      t.date===targetDate &&
+      t.person===template.person &&
+      t.type===template.type &&
+      t.is_background &&
+      (t.project_ids||[]).slice().sort().join(',')===projKey
+    );
+    if(!exists){
+      ttTasks.push({
+        ...template,
+        id: ttNextId(),
+        date: targetDate
+      });
+      added++;
+    }
+  });
+  if(added>0){ saveTTTasks(); }
+}
+
 function renderTimetable(){
   if(!ttTasks) ttTasks = loadTTTasks();
   if(!ttWeekStart) ttWeekStart = weekMonday(new Date());
+  ttInjectRecurringTasks();
 
   const myRow = ttGetMyRow();
 
@@ -4133,7 +4212,9 @@ function renderTimetable(){
     const ds = isoDate(d);
     const isWkend = i>=5;
     const isToday = ds===todayStr;
-    html += `<th style="${isWkend?'background:#3a3a5c;':''}${isToday?'background:#C55A11;':''}">${DAYS[i]}<br><span style="font-weight:400;font-size:.65rem;opacity:.85">${d.getDate()}/${d.getMonth()+1}</span></th>`;
+    const canCopy = (currentUser && ['admin','manager'].includes(currentUser.role));
+    const copyBtn = canCopy ? `<span onclick="ttOpenCopyDay('${ds}',event)" title="Copy all tasks from this day to other days" style="display:inline-block;margin-left:5px;cursor:pointer;font-size:.7rem;opacity:.7;vertical-align:middle;background:rgba(255,255,255,.18);border-radius:4px;padding:0 4px;line-height:1.5" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.7'">📋</span>` : '';
+    html += `<th style="${isWkend?'background:#3a3a5c;':''}${isToday?'background:#C55A11;':{}}"><span style="display:flex;align-items:center;justify-content:center;gap:2px">${DAYS[i]}${copyBtn}</span><span style="font-weight:400;font-size:.65rem;opacity:.85">${d.getDate()}/${d.getMonth()+1}</span></th>`;
   });
   html += `</tr></thead><tbody>`;
 
@@ -4206,11 +4287,12 @@ function renderTimetable(){
 
         // Background task styling
         const bgClass = t.is_background ? ' bg-task' : '';
+        const recurringBadge = t.recurring ? `<span title="Recurring every week" style="font-size:.58rem;margin-left:3px;opacity:.7">🔁</span>` : '';
 
         const editAttr = `onclick="openTTDetail(${t.id},event)"`;
         const dragAttrs = canAddEdit ? `draggable="true" ondragstart="ttDragStart(event,${t.id})" ondragend="this.style.opacity='1'"` : '';
 
-        return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}${bgClass}"${methodAttr} ${editAttr} ${dragAttrs} style="position:relative">${typeShort} ${projIds.length?'':t.desc||''}${statBadge}${projTags}</span>`;
+        return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}${bgClass}"${methodAttr} ${editAttr} ${dragAttrs} style="position:relative">${typeShort} ${projIds.length?'':t.desc||''}${recurringBadge||''}${statBadge}${projTags}</span>`;
       }).join('');
       if(canAddEdit) chips += `<span class="tt-add-btn" onclick="openTTModal('${row.id}','${ds}')" title="Add task">＋</span>`;
 
@@ -4528,6 +4610,8 @@ function openTTModal(person='', date=''){
   const rbox=document.getElementById('tt_runtime_box'); if(rbox) rbox.style.display='none';
   const statEl=document.getElementById('ttNeedsStat'); if(statEl) statEl.checked=false;
   const bgEl=document.getElementById('ttIsBackground'); if(bgEl) bgEl.checked=false;
+  const recEl=document.getElementById('ttIsRecurring'); if(recEl) recEl.checked=false;
+  const recWrap=document.getElementById('ttRecurringWrap'); if(recWrap) recWrap.style.display='none';
   document.getElementById('ttMov').classList.add('open');
 }
 
@@ -4556,7 +4640,85 @@ function editTTTask(id){
   document.getElementById('ttDelBtn').style.display='inline-flex';
   const statEl2=document.getElementById('ttNeedsStat'); if(statEl2) statEl2.checked=!!(t.needs_stat);
   const bgEl2=document.getElementById('ttIsBackground'); if(bgEl2) bgEl2.checked=!!(t.is_background);
+  const recEl2=document.getElementById('ttIsRecurring'); if(recEl2) recEl2.checked=!!(t.recurring);
+  const recWrap2=document.getElementById('ttRecurringWrap'); if(recWrap2) recWrap2.style.display=t.is_background?'flex':'none';
   document.getElementById('ttMov').classList.add('open');
+}
+
+// ── COPY DAY ─────────────────────────────────────────────────────────────
+let ttCopyDaySource = null;
+
+function ttOpenCopyDay(dateStr, event){
+  if(event) event.stopPropagation();
+  ttCopyDaySource = dateStr;
+  if(!ttTasks) ttTasks = loadTTTasks();
+
+  const srcTasks = ttTasks.filter(t=>t.date===dateStr);
+  if(!srcTasks.length){ toast('No tasks on this day to copy'); return; }
+
+  // Build week days list as targets (exclude source day)
+  const ws = ttWeekStart || weekMonday(new Date());
+  const days = [];
+  for(let i=0;i<7;i++){
+    const d = new Date(ws);
+    d.setDate(d.getDate()+i);
+    days.push(d);
+  }
+
+  const srcDate = new Date(dateStr+'T00:00:00');
+  const fmtDay = d => d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
+
+  document.getElementById('ttCopyDayFrom').textContent = fmtDay(srcDate) + ` (${srcTasks.length} task${srcTasks.length!==1?'s':''})`;
+
+  // Build checkboxes for target days
+  let html = '';
+  days.forEach(d=>{
+    const ds = isoDate(d);
+    if(ds===dateStr) return; // skip source
+    const existing = ttTasks.filter(t=>t.date===ds).length;
+    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:1.5px solid #e2e8f0;cursor:pointer;font-size:.82rem;font-weight:500;color:#1e293b" 
+      onmouseover="this.style.borderColor='#1F4E79'" onmouseout="this.style.borderColor=this.querySelector('input').checked?'#1F4E79':'#e2e8f0'">
+      <input type="checkbox" value="${ds}" style="accent-color:#1F4E79;width:15px;height:15px" onchange="this.parentElement.style.borderColor=this.checked?'#1F4E79':'#e2e8f0'">
+      <span style="flex:1">${fmtDay(d)}</span>
+      ${existing?`<span style="font-size:.68rem;color:#94a3b8">${existing} existing</span>`:'<span style="font-size:.68rem;color:#94a3b8">empty</span>'}
+    </label>`;
+  });
+  document.getElementById('ttCopyDayTargets').innerHTML = html;
+  document.getElementById('ttCopyDayOv').classList.add('open');
+}
+
+function ttExecuteCopyDay(){
+  if(!ttCopyDaySource) return;
+  const checked = [...document.querySelectorAll('#ttCopyDayTargets input:checked')].map(el=>el.value);
+  if(!checked.length){ toast('Select at least one target day'); return; }
+
+  const srcTasks = ttTasks.filter(t=>t.date===ttCopyDaySource);
+  let copied = 0, skipped = 0;
+
+  checked.forEach(targetDate=>{
+    srcTasks.forEach(src=>{
+      // Skip duplicate: same person + type + same project_ids on that day
+      const projKey = (src.project_ids||[]).slice().sort().join(',');
+      const isDup = ttTasks.some(t=>
+        t.date===targetDate &&
+        t.person===src.person &&
+        t.type===src.type &&
+        (t.project_ids||[]).slice().sort().join(',')===projKey
+      );
+      if(isDup){ skipped++; return; }
+      ttTasks.push({
+        ...src,
+        id: ttNextId(),
+        date: targetDate
+      });
+      copied++;
+    });
+  });
+
+  saveTTTasks();
+  cm('ttCopyDayOv');
+  renderTimetable();
+  toast(`✅ Copied ${copied} task${copied!==1?'s':''}${skipped?' ('+skipped+' duplicate'+( skipped!==1?'s':'')+' skipped)':''} to ${checked.length} day${checked.length!==1?'s':''}`);
 }
 
 function delTTTask(){
@@ -4584,13 +4746,17 @@ function saveTTTask(){
     const projPart=project_ids.map(id2=>{ const p=projs.find(x=>x.id===id2); return p?`P${p.project_no}`:''}).filter(Boolean).join(', ');
     desc=typeLabel?`${typeLabel} ${projPart}`:projPart;
   }
+  const is_background = !!(document.getElementById('ttIsBackground')?.checked);
+  const recurring = is_background && !!(document.getElementById('ttIsRecurring')?.checked);
+  const needs_stat = !!(document.getElementById('ttNeedsStat')?.checked);
+  const is_bg_old = id ? (ttTasks.find(t=>t.id===parseInt(id))||{}).is_background : false;
   if(!date){toast('Date is required');return;}
   if(!desc&&!project_ids.length){toast('Add at least one project or a description');return;}
   if(id){
     const i=ttTasks.findIndex(t=>t.id===parseInt(id));
-    if(i>=0) ttTasks[i]={...ttTasks[i],person,date,type,desc,project_ids};
+    if(i>=0) ttTasks[i]={...ttTasks[i],person,date,type,desc,project_ids,is_background,recurring,needs_stat};
   } else {
-    ttTasks.push({id:ttNextId(),person,date,type,desc,project_ids});
+    ttTasks.push({id:ttNextId(),person,date,type,desc,project_ids,is_background,recurring,needs_stat});
   }
   saveTTTasks();
   cm('ttMov');
