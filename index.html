@@ -391,7 +391,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
     <button class="lbtn" onclick="doLogin()">Sign In →</button>
     <div class="lerr" id="loginErr"></div>
     <div style="margin-top:14px;font-size:.68rem;color:#94a3b8;text-align:center">
-      Default accounts: <strong>admin</strong> / admin123 &nbsp;|&nbsp; <strong>intern</strong> / intern123
+      Default account: <strong>admin</strong>
     </div>
   </div>
 </div>
@@ -1333,7 +1333,7 @@ const REV_GOAL = 20000000;
 
 // ── AUTH SYSTEM ──────────────────────────────────────────────────────────
 const DEFAULT_USERS = [
-  {id:1,  username:'admin',   password:'admin123',   name:'Administrator', role:'admin',    timetable_id:''},
+  {id:1,  username:'admin',   password:'chromatography',   name:'Administrator', role:'admin',    timetable_id:''},
   {id:2,  username:'bib',     password:'bib123',     name:'Bib',           role:'manager',  timetable_id:''},
   {id:3,  username:'finance', password:'fin123',     name:'Finance Team',  role:'fin',      timetable_id:''},
   {id:4,  username:'maprang', password:'maprang123', name:'Maprang',        role:'ops',      timetable_id:'Maprang'},
@@ -1368,7 +1368,7 @@ function loadUsers(){
     });
     // Reset admin password to default (fix)
     const admin = merged.find(x=>x.username==='admin');
-    if(admin) admin.password='admin123';
+    if(admin) admin.password='chromatography';
     return merged;
   }
   return base;
