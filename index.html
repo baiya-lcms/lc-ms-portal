@@ -257,8 +257,8 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .tt-table tr:nth-child(even) td.tt-name{background:inherit}
 .tt-table td.tt-name{font-weight:700;font-size:.75rem;background:#dbeafe;color:#1e40af;text-align:center;padding:6px;border-right:2px solid #93c5fd;position:sticky;left:0;z-index:2;white-space:nowrap}
 /* Instruments */
-.tt-table td.tt-name.inst{color:#fff;background:#7c3aed;border-right:2px solid #6d28d9}
-.tt-table td.tt-name.inst-tq{color:#fff;background:#0e7490;border-right:2px solid #0891b2}
+.tt-table td.tt-name.inst{color:#1c1917;background:#fed7aa;border-right:2px solid #f97316;font-weight:800}
+.tt-table td.tt-name.inst-tq{color:#1c1917;background:#fde68a;border-right:2px solid #f59e0b;font-weight:800}
 /* Interns — light purple */
 .tt-table td.tt-name.intern-row{background:#ede9fe;color:#5b21b6;border-right:2px solid #c4b5fd}
 /* Staff (ops/manager) — navy blue, already default above */
@@ -287,6 +287,10 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .tt-chip[data-method*="Metabolite"]{background:#dbeafe!important;color:#1e40af!important;border-left-color:#3b82f6!important}
 .tt-chip[data-method*="Lipidomics"]{background:#d1fae5!important;color:#065f46!important;border-left-color:#10b981!important}
 .tt-chip[data-method*="Quantification"]{background:#fef9c3!important;color:#854d0e!important;border-left-color:#f59e0b!important}
+.tt-table tr.tt-qtof-row td.tt-day{background:#fff7ed}
+.tt-table tr.tt-qtof-row td.tt-day:hover{background:#fed7aa55}
+.tt-table tr.tt-tq-row td.tt-day{background:#fffbeb}
+.tt-table tr.tt-tq-row td.tt-day:hover{background:#fde68a55}
 /* Background/long-term tasks */
 .tt-chip.bg-task{opacity:.45;font-style:italic;border-style:dashed}
 /* Multi-day continuation */
@@ -792,8 +796,8 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
     <span style="opacity:.45;font-style:italic;background:#f1f5f9;color:#64748b;padding:2px 9px;border-radius:8px;font-size:.68rem;border:1px dashed #cbd5e1">Background</span>
     <span style="margin-left:8px;font-size:.68rem"><span style="background:#dbeafe;color:#1e40af;padding:2px 7px;border-radius:8px;font-weight:600;border-right:3px solid #93c5fd">Staff row</span></span>
     <span style="font-size:.68rem"><span style="background:#ede9fe;color:#5b21b6;padding:2px 7px;border-radius:8px;font-weight:600;border-right:3px solid #c4b5fd">Intern row</span></span>
-    <span style="font-size:.68rem"><span style="background:#7c3aed;color:#fff;padding:2px 7px;border-radius:8px;font-weight:600">QTOF</span></span>
-    <span style="font-size:.68rem"><span style="background:#0e7490;color:#fff;padding:2px 7px;border-radius:8px;font-weight:600">TQ</span></span>
+    <span style="font-size:.68rem"><span style="background:#fed7aa;color:#1c1917;padding:2px 7px;border-radius:8px;font-weight:800;border:1px solid #f97316">QTOF</span></span>
+    <span style="font-size:.68rem"><span style="background:#fde68a;color:#1c1917;padding:2px 7px;border-radius:8px;font-weight:800;border:1px solid #f59e0b">TQ</span></span>
   </div>
   <!-- ⏱ Run Time Calculator Panel -->
   <div id="rtCalcPanel" style="display:none;position:fixed;right:0;top:56px;width:360px;height:calc(100vh - 56px);background:#fff;box-shadow:-4px 0 20px rgba(0,0,0,.15);z-index:300;overflow-y:auto;flex-direction:column">
@@ -812,7 +816,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
         </div>
         <div style="flex:1">
           <label style="font-size:.7rem;font-weight:600;color:#475569;display:block;margin-bottom:3px">Start Time</label>
-          <input type="time" id="rtStart" value="08:00" style="width:100%;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.8rem" oninput="rtCalcUpdate()">
+          <input type="time" id="rtStart" value="08:00" style="width:100%;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.8rem;font-weight:600;color:#1F4E79" oninput="rtCalcUpdate()" onchange="rtCalcUpdate()">
         </div>
       </div>
       <label style="font-size:.7rem;font-weight:600;color:#475569;display:block;margin-bottom:3px">Add Project to Queue</label>
@@ -3651,7 +3655,7 @@ function renderPsCard(p){
 }
 
 function openPsPopover(projId, stepId, event){
-  const canEdit = currentUser && ['admin','manager','ops'].includes(currentUser.role);
+  const canEdit = currentUser && ['admin','manager','ops','intern'].includes(currentUser.role);
   if(!canEdit) return;
   psPopoverCtx = {projId, stepId};
   const tl = getTimeline(projId);
@@ -3724,7 +3728,14 @@ let rtQueueStore = {}; // keyed by week ISO date
 let rtQueue = [];
 
 function rtGetWeekKey(){ return ttWeekStart ? isoDate(ttWeekStart) : isoDate(weekMonday(new Date())); }
-function rtLoadQueue(){ const k=rtGetWeekKey(); rtQueue=(rtQueueStore[k]||[]); }
+function rtLoadQueue(){ 
+  const k=rtGetWeekKey(); 
+  rtQueue=(rtQueueStore[k]||[]);
+  // Restore saved start time
+  const meta = rtQueueStore[k+'_meta'];
+  const startEl = document.getElementById('rtStart');
+  if(meta?.startTime && startEl) startEl.value = meta.startTime;
+}
 function rtSaveQueue(){
   const k=rtGetWeekKey();
   rtQueueStore[k]=rtQueue;
@@ -3791,7 +3802,14 @@ function rtRemove(id){
 
 function rtClearAll(){ rtQueue=[]; rtSaveQueue(); rtRenderQueue(); }
 
-function rtCalcUpdate(){ rtRenderQueue(); }
+function rtCalcUpdate(){ 
+  // Save start time with queue
+  const k=rtGetWeekKey();
+  if(!rtQueueStore[k+'_start']) rtQueueStore[k+'_start']={};
+  const st = document.getElementById('rtStart')?.value;
+  if(st) rtQueueStore[k+'_meta'] = {startTime: st};
+  rtRenderQueue(); 
+}
 
 function rtRenderQueue(){
   const container = document.getElementById('rtQueue');
@@ -3916,14 +3934,33 @@ function openTTDetail(taskId, event){
   const footer = document.getElementById('ttDetailFooter');
   if(footer) footer.style.display = canEdit ? 'flex' : 'none';
 
-  // Position popover
+  // Position popover — ensure it fits in viewport
   const pop = document.getElementById('ttDetailPop');
   pop.style.display = 'block';
-  const rect = event.target.getBoundingClientRect();
-  const top  = Math.min(rect.bottom + 6, window.innerHeight - 320);
-  const left = Math.min(rect.left, window.innerWidth - 330);
-  pop.style.top  = Math.max(60, top) + 'px';
-  pop.style.left = Math.max(10, left) + 'px';
+  pop.style.maxHeight = '80vh';
+  pop.style.overflowY = 'auto';
+
+  // Measure after display
+  requestAnimationFrame(()=>{
+    const popH = pop.offsetHeight;
+    const popW = pop.offsetWidth;
+    const rect = event.target.getBoundingClientRect();
+    const margin = 8;
+
+    // Horizontal: prefer right of click, flip left if needed
+    let left = rect.left;
+    if(left + popW + margin > window.innerWidth) left = window.innerWidth - popW - margin;
+    left = Math.max(margin, left);
+
+    // Vertical: prefer below click, flip above if not enough space
+    let top = rect.bottom + margin;
+    if(top + popH + margin > window.innerHeight) top = rect.top - popH - margin;
+    if(top < 60) top = Math.min(rect.bottom + margin, window.innerHeight - popH - margin);
+    top = Math.max(60, top);
+
+    pop.style.top  = top + 'px';
+    pop.style.left = left + 'px';
+  });
 
   setTimeout(()=>document.addEventListener('click', closeTTDetailOutside, {once:true}), 50);
 }
@@ -4030,6 +4067,7 @@ function renderTimetable(){
     let trCls = '';
     if(isMyRow) trCls += ' tt-my-row';
     if(isDimmed) trCls += ' tt-dimmed';
+    if(row.type==='instrument') trCls += row.id==='TQ' ? ' tt-tq-row' : ' tt-qtof-row';
 
     // Label with user link badge
     let nameLbl = `${row.label}`;
