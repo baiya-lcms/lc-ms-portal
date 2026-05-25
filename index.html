@@ -877,7 +877,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
       <h3 id="ttMTitle">Add Timetable Task</h3>
       <button class="mclose" onclick="cm('ttMov')">×</button>
     </div>
-    <div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto;max-height:calc(90vh - 120px);flex:1;min-height:0">
+    <div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto;flex:1;min-height:0">
       <div style="grid-column:1/-1">
         <label style="font-size:.75rem;font-weight:600;color:#475569;display:block;margin-bottom:4px">Person / Instrument</label>
         <select id="ttPerson" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem"></select>
@@ -1564,10 +1564,8 @@ let D = {};
 
 // ── FIREBASE SAVE/LOAD ────────────────────────────────────────────────────
 function fbSave(key, data){
-  if(!fbAuth.currentUser){ 
-    console.warn('fbSave skipped — not authenticated:', key);
-    return;
-  }
+  // Write directly — Firebase DB rules handle security
+  // Don't gate on fbAuth.currentUser as background auth may not complete for all roles
   fbDB.ref('lcms/' + key).set(data)
     .then(()=> console.log('Firebase saved:', key))
     .catch(e => console.error('Firebase save error:', key, e.code, e.message));
@@ -3714,7 +3712,7 @@ function getTimeline(projId){
 function saveTimelines(){
   localStorage.setItem('lcms_timelines', JSON.stringify(D.timelines||{}));
   window._fbSaving = true; setTimeout(()=>{ window._fbSaving=false; }, 3000);
-  if(fbAuth.currentUser) fbSave('timelines', D.timelines);
+  fbSave('timelines', D.timelines); // no auth check — all roles need to save
 }
 
 function renderProjStatus(){
@@ -3955,8 +3953,8 @@ function psToggleUser(name, checked){
   if(!tl.steps[stepId]) tl.steps[stepId]={status:'pending',assignees:[]};
   const arr = tl.steps[stepId].assignees||[];
   if(checked && !arr.includes(name)) arr.push(name);
-  if(!checked) tl.steps[stepId].assignees = arr.filter(x=>x!==name);
-  tl.steps[stepId].assignees = arr;
+  if(!checked){ tl.steps[stepId].assignees = arr.filter(x=>x!==name); }
+  else { tl.steps[stepId].assignees = arr; }
   saveTimelines();
   // Re-render just this card
   const card = document.getElementById(`ps-proj-${projId}`);
@@ -4176,7 +4174,8 @@ function openTTDetail(taskId, event){
   const t = ttTasks.find(x=>x.id===taskId);
   if(!t) return;
 
-  const canEdit = currentUser && ['admin','manager','ops'].includes(currentUser.role);
+  const isOwnTask = currentUser && t && t.person === currentUser.timetable_id;
+  const canEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || isOwnTask;
   const projs = (D.projects||[]);
   const projIds = t.project_ids||[];
   const linkedProjs = projIds.map(id=>projs.find(p=>p.id===id)).filter(Boolean);
@@ -4415,7 +4414,7 @@ function renderTimetable(){
       if(isWkend) cellCls += ' weekend';
       if(isToday) cellCls += ' today';
 
-      const canAddEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || isMyRow;
+      const canAddEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || isMyRow; // interns can edit their own row via isMyRow
       let chips = tasks.map(t=>{
         const projIds = t.project_ids||[];
         const projs = (D&&D.projects)||[];
