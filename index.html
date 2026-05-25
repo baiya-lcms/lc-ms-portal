@@ -1590,16 +1590,8 @@ function saveD(){
 }
 
 async function loadFromFirebase(){
-  // Wait for Firebase Auth state to resolve
-  await new Promise(resolve => {
-    const unsub = fbAuth.onAuthStateChanged(user => { unsub(); resolve(user); });
-  });
-
-  if(!fbAuth.currentUser){
-    console.warn('loadFromFirebase: not authenticated, using local cache');
-    return localFallback();
-  }
-
+  // No auth gate — Firebase DB rules handle security.
+  // All logged-in dashboard users should read/write regardless of Firebase Auth state.
   try {
     console.log('loadFromFirebase: reading from Firebase...');
     const snap = await fbDB.ref('lcms').get();
