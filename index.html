@@ -292,7 +292,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .tt-table tr.tt-tq-row td.tt-day{background:#fffbeb}
 .tt-table tr.tt-tq-row td.tt-day:hover{background:#fde68a55}
 /* Background/long-term tasks */
-.tt-chip.bg-task{opacity:.45;font-style:italic;border-style:dashed}
+.tt-chip.bg-task{opacity:.38;font-style:italic;border-style:dashed;background:#f1f5f9!important;color:#64748b!important;border-color:#cbd5e1!important}
 /* Multi-day continuation */
 .tt-chip.continues{border-right:none;border-radius:6px 0 0 6px;margin-right:-2px}
 .tt-chip.continuation{border-left:none;border-radius:0 6px 6px 0;opacity:.85;font-style:italic}
@@ -3932,7 +3932,8 @@ function openTTDetail(taskId, event){
   const t = ttTasks.find(x=>x.id===taskId);
   if(!t) return;
 
-  const canEdit = currentUser && ['admin','manager','ops'].includes(currentUser.role);
+  const myRow = ttGetMyRow();
+  const canEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || (myRow && t.person === myRow);
   const projs = (D.projects||[]);
   const projIds = t.project_ids||[];
   const linkedProjs = projIds.map(id=>projs.find(p=>p.id===id)).filter(Boolean);
@@ -4124,13 +4125,15 @@ function renderTimetable(){
       const ds = isoDate(d);
       const isWkend = di>=5;
       const isToday = ds===todayStr;
-      const tasks = ttTasks.filter(t=>t.person===row.id && t.date===ds);
+      const tasks = ttTasks.filter(t=>t.person===row.id && t.date===ds)
+                           .sort((a,b)=>(b.is_background?1:0)-(a.is_background?1:0)); // background tasks always first
 
       let cellCls = 'tt-day';
       if(isWkend) cellCls += ' weekend';
       if(isToday) cellCls += ' today';
 
-      const canAddEdit = (currentUser && ['admin','manager'].includes(currentUser.role)) || isMyRow;
+      // Interns can edit tasks on their own row
+      const canAddEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || isMyRow;
       let chips = tasks.map(t=>{
         const projIds = t.project_ids||[];
         const projs = (D&&D.projects)||[];
@@ -4504,8 +4507,8 @@ function editTTTask(id){
   const projIds = t.project_ids||[];
   ttPopulateProjectList(projIds);
   document.getElementById('ttDelBtn').style.display='inline-flex';
-  const statEl2=document.getElementById('ttNeedsStat'); if(statEl2) statEl2.checked=!!(task.needs_stat);
-  const bgEl2=document.getElementById('ttIsBackground'); if(bgEl2) bgEl2.checked=!!(task.is_background);
+  const statEl2=document.getElementById('ttNeedsStat'); if(statEl2) statEl2.checked=!!(t.needs_stat);
+  const bgEl2=document.getElementById('ttIsBackground'); if(bgEl2) bgEl2.checked=!!(t.is_background);
   document.getElementById('ttMov').classList.add('open');
 }
 
