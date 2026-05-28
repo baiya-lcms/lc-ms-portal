@@ -1566,19 +1566,20 @@ async function loadFromFirebase(){
         const localUsers = localStorage.getItem('lcms_users') ? JSON.parse(localStorage.getItem('lcms_users')) : [];
         if(localUsers.length > 0) fbDB.ref('lcms/users').set(localUsers).catch(e=>console.warn('users push failed:', e));
       }
-      if(fb.projects) localStorage.setItem('lcms_projects', JSON.stringify(fb.projects));
-      if(fb.clients)  localStorage.setItem('lcms_clients',  JSON.stringify(fb.clients));
-      if(fb.fin)      localStorage.setItem('lcms_fin',      JSON.stringify(fb.fin));
-      if(fb.inq2)      localStorage.setItem('lcms_inq2',      JSON.stringify(fb.inq2));
+      const fbArr2 = v => !v ? [] : Array.isArray(v) ? v : Object.values(v);
+      if(fb.projects) localStorage.setItem('lcms_projects', JSON.stringify(fbArr2(fb.projects)));
+      if(fb.clients)  localStorage.setItem('lcms_clients',  JSON.stringify(fbArr2(fb.clients)));
+      if(fb.fin)      localStorage.setItem('lcms_fin',      JSON.stringify(fbArr2(fb.fin)));
+      if(fb.inq2)      localStorage.setItem('lcms_inq2',      JSON.stringify(fbArr2(fb.inq2)));
       if(fb.timelines)  localStorage.setItem('lcms_timelines', JSON.stringify(fb.timelines));
       if(fb.rtqueue)    { localStorage.setItem('lcms_rtqueue', JSON.stringify(fb.rtqueue)); rtQueueStore=fb.rtqueue; }
       return {
-        clients:  fb.clients  || JSON.parse(JSON.stringify(SD_CLIENTS)),
-        projects: fb.projects || JSON.parse(JSON.stringify(SD_PROJECTS)),
+        clients:  fbArr2(fb.clients)  .length ? fbArr2(fb.clients)  : JSON.parse(JSON.stringify(SD_CLIENTS)),
+        projects: fbArr2(fb.projects) .length ? fbArr2(fb.projects) : JSON.parse(JSON.stringify(SD_PROJECTS)),
         inq:      JSON.parse(JSON.stringify(SD_INQ)),
-        fin:      fb.fin      || JSON.parse(JSON.stringify(SD_FIN)),
+        fin:      fbArr2(fb.fin)      .length ? fbArr2(fb.fin)      : JSON.parse(JSON.stringify(SD_FIN)),
         prosp:    [],
-        inq2:     fb.inq2     || [],
+        inq2:     fbArr2(fb.inq2),
         timelines: fb.timelines || (localStorage.getItem('lcms_timelines') ? JSON.parse(localStorage.getItem('lcms_timelines')) : {}),
       };
     }
@@ -1815,19 +1816,25 @@ async function initDashboard(){
   } catch(e){ console.warn('Could not load users from Firebase:', e.message); }
   D = await loadFromFirebase();
   // Also load timetable & board from Firebase
+  // Helper: Firebase stores arrays as objects {0:…,1:…} — always normalize
+  const fbArr = v => {
+    if(!v) return [];
+    if(Array.isArray(v)) return v;
+    return Object.values(v);
+  };
   try {
     const tlSnap = await fbDB.ref('lcms/timelines').get();
     if(tlSnap.exists()){ D.timelines = tlSnap.val(); console.log('Timelines loaded from Firebase'); }
     const ttSnap = await fbDB.ref('lcms/timetable').get();
-    if(ttSnap.exists()){ ttTasks = ttSnap.val(); console.log('Timetable loaded:', ttTasks?.length, 'tasks'); }
+    if(ttSnap.exists()){ ttTasks = fbArr(ttSnap.val()); console.log('Timetable loaded:', ttTasks.length, 'tasks'); }
     else { console.warn('No timetable data in Firebase'); ttTasks = loadTTTasks(); }
     const wbSnap = await fbDB.ref('lcms/wbcards').get();
     if(wbSnap.exists()){
-      wbCards = wbSnap.val();
-      console.log('WB cards loaded:', wbCards?.length, 'cards');
+      wbCards = fbArr(wbSnap.val());
+      console.log('WB cards loaded:', wbCards.length, 'cards');
       const currentWeek = isoDate(weekMonday(new Date()));
       let migrated = false;
-      (wbCards||[]).forEach(c=>{ if(!c.week){ c.week=currentWeek; migrated=true; } });
+      wbCards.forEach(c=>{ if(!c.week){ c.week=currentWeek; migrated=true; } });
       if(migrated){ saveWbCards(); }
     } else { console.warn('No wbcards in Firebase'); wbCards = loadWbCards(); }
   } catch(e){ console.error('Firebase timetable/wb load error:', e.code, e.message); ttTasks = loadTTTasks(); wbCards = loadWbCards(); }
