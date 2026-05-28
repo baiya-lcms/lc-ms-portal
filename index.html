@@ -3703,11 +3703,13 @@ function openPsPopover(projId, stepId, event){
 
   const pop = document.getElementById('psPopover');
   pop.style.display = 'block';
-  const rect = event.target.getBoundingClientRect();
-  const top = Math.min(rect.bottom + 6, window.innerHeight - 280);
-  const left = Math.min(rect.left, window.innerWidth - 220);
-  pop.style.top = top + 'px';
-  pop.style.left = left + 'px';
+  const stepEl = event.target.closest('.ps-step') || event.target;
+  const rect = stepEl.getBoundingClientRect();
+  const popH = 300, popW = 230;
+  const top  = (rect.bottom + 8 + popH > window.innerHeight) ? rect.top - popH - 4 : rect.bottom + 6;
+  const left = Math.min(rect.left, window.innerWidth - popW - 10);
+  pop.style.top  = Math.max(8, top)  + 'px';
+  pop.style.left = Math.max(8, left) + 'px';
 
   // Close on outside click
   setTimeout(()=>document.addEventListener('click', closePsPopoverOutside, {once:true}), 50);
@@ -3726,12 +3728,11 @@ function psToggleUser(name, checked){
   const {projId, stepId} = psPopoverCtx;
   const tl = getTimeline(projId);
   if(!tl.steps[stepId]) tl.steps[stepId]={status:'pending',assignees:[]};
-  const arr = tl.steps[stepId].assignees||[];
-  if(checked && !arr.includes(name)) arr.push(name);
-  if(!checked) tl.steps[stepId].assignees = arr.filter(x=>x!==name);
+  let arr = tl.steps[stepId].assignees||[];
+  if(checked) arr = arr.includes(name) ? arr : [...arr, name];
+  else        arr = arr.filter(x=>x!==name);
   tl.steps[stepId].assignees = arr;
   saveTimelines();
-  // Re-render just this card
   const card = document.getElementById(`ps-proj-${projId}`);
   if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
 }
