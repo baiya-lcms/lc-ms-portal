@@ -278,7 +278,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .tt-chip.other{border-left-color:#94a3b8}
 /* Method overlay colors — use *=  (contains) so variants like "Quantification - Metabolite" match */
 /* These come AFTER task-type rules so same specificity = last wins */
-.tt-chip[data-method*="Proteomics"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
+.tt-chip[data-method*="Proteomics"]{background:#fce7f3!important;color:#9d174d!important;border-left-color:#db2777!important}
 .tt-chip[data-method*="Peptidomics"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
 .tt-chip[data-method*="Peptide"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
 .tt-chip[data-method*="Protein"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
@@ -339,8 +339,30 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 /* Faded done steps */
 .ps-step.done{opacity:.55}
 .ps-step.done:hover{opacity:.8}
+/* ── Long-Term Planning Gantt ───────────────────────────────── */
+.plan-scroll{overflow-x:auto;padding-bottom:10px}
+.plan-table{border-collapse:collapse;min-width:max-content;width:100%}
+.plan-table th,.plan-table td{border:1px solid #e2e8f0}
+.plan-month-hdr{background:#1F4E79;color:#fff;text-align:center;padding:7px 8px;font-size:.72rem;font-weight:700;cursor:pointer;user-select:none;letter-spacing:.03em}
+.plan-month-hdr:hover{background:#2E75B6}
+.plan-week-hdr{background:#f0f6ff;color:#1F4E79;text-align:center;padding:4px 6px;font-size:.68rem;font-weight:700;min-width:56px;max-width:56px}
+.plan-label-hdr{background:#1F4E79;color:#fff;padding:7px 14px;font-size:.72rem;font-weight:700;min-width:220px;position:sticky;left:0;z-index:10}
+.plan-row-label{background:#fff;padding:7px 10px;font-size:.78rem;min-width:220px;max-width:220px;position:sticky;left:0;z-index:5;border-right:2px solid #dde8f0}
+.plan-cell{min-width:56px;max-width:56px;height:38px;padding:2px;background:#fff;position:relative}
+.plan-bar{position:absolute;top:7px;bottom:7px;pointer-events:none;min-width:4px}
+.plan-bar.b-start{border-radius:8px 0 0 8px;left:4px;right:0}
+.plan-bar.b-end{border-radius:0 8px 8px 0;left:0;right:4px}
+.plan-bar.b-solo{border-radius:8px;left:4px;right:4px}
+.plan-bar.b-mid{left:0;right:0}
+.plan-proj-no{font-weight:700;color:#1F4E79;font-size:.8rem}
+.plan-proj-cust{font-size:.7rem;color:#64748b;display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.plan-method-tag{font-size:.62rem;padding:1px 6px;border-radius:8px;display:inline-block;margin-top:2px;font-weight:600}
+.plan-del-btn{font-size:.75rem;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0 3px;float:right;line-height:1.2}
+.plan-del-btn:hover{color:#ef4444}
+.plan-collapsed-week{display:none}
+.plan-collapsed-month{min-width:20px;max-width:20px;background:#f0f6ff}
+body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
 </style>
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -408,6 +430,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
   <div class="tab" id="tabFollowup" onclick="sw('followup',this)">🔔 Follow-Up <span class="bdg bdg-o" id="fuB">0</span></div>
   <div class="tab" id="tabUsers" onclick="sw('users',this)">👤 Users</div>
   <div class="tab" id="tabTimetable" onclick="sw('timetable',this);renderTimetable()">📅 Timetable</div>
+  <div class="tab" id="tabPlanning" onclick="sw('planning',this);renderPlanning()">📆 Planning</div>
   <div class="tab" id="tabProjStatus" onclick="sw('projstatus',this);renderProjStatus()">🔬 Project Progress</div>
 </div>
 
@@ -786,7 +809,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
     <span style="font-size:.72rem;font-weight:700;color:#475569;margin-right:4px">Method:</span>
     <span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #3b82f6">Metabolomics</span>
     <span style="background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #10b981">Lipidomics</span>
-    <span style="background:#ede9fe;color:#5b21b6;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #7c3aed">Proteomics</span>
+    <span style="background:#fce7f3;color:#9d174d;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #db2777">Proteomics</span>
     <span style="background:#fef9c3;color:#854d0e;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #f59e0b">Quantification</span>
     <span style="width:1px;height:16px;background:#cbd5e1;display:inline-block;margin:0 4px"></span>
     <span style="display:inline-flex;align-items:center;gap:5px;font-size:.68rem;color:#dc2626;font-weight:700"><span style="width:9px;height:9px;border-radius:50%;background:#dc2626;display:inline-block"></span>Statistical analysis required</span>
@@ -890,7 +913,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
     <span style="width:1px;height:16px;background:#e2e8f0;display:inline-block"></span>
     <span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #3b82f6">Metabolomics</span>
     <span style="background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #10b981">Lipidomics</span>
-    <span style="background:#ede9fe;color:#5b21b6;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #7c3aed">Proteomics</span>
+    <span style="background:#fce7f3;color:#9d174d;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #db2777">Proteomics</span>
     <span style="background:#fef9c3;color:#854d0e;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #f59e0b">Quantification</span>
     <span style="width:1px;height:16px;background:#e2e8f0;display:inline-block"></span>
     <span style="background:#dc2626;color:#fff;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:700">STAT = urgent</span>
@@ -1186,6 +1209,76 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 </div>
 
 
+<!-- ═══════════ PLANNING ═══════════ -->
+<div class="view" id="v-planning">
+  <div class="card" style="margin-bottom:20px">
+    <div class="chdr" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h3>⚗️ TQ — Long-Term Planning</h3>
+      <button class="btn bg bsm add-btn" onclick="openPlanModal('tq')">+ Add Project</button>
+    </div>
+    <div class="plan-scroll"><div id="plan-tq"></div></div>
+  </div>
+  <div class="card">
+    <div class="chdr" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h3>🔬 QTOF — Long-Term Planning</h3>
+      <button class="btn bg bsm add-btn" onclick="openPlanModal('qtof')">+ Add Project</button>
+    </div>
+    <div class="plan-scroll"><div id="plan-qtof"></div></div>
+  </div>
+</div>
+
+<!-- PLANNING MODAL -->
+<div class="ov" id="planMov">
+  <div class="modal" style="max-width:500px">
+    <div class="mhdr" style="background:#1F4E79;color:#fff;border-radius:14px 14px 0 0">
+      <h3 style="color:#fff" id="planMTitle">Add Project to Planning</h3>
+      <button class="mclose" style="color:#fff" onclick="cm('planMov')">×</button>
+    </div>
+    <div class="mbody">
+      <input type="hidden" id="plan_instrument">
+      <input type="hidden" id="plan_edit_id">
+      <div class="fg">
+        <div class="fgrp full">
+          <label>Project</label>
+          <input id="plan_search" placeholder="Type project no. or client name to search…" oninput="planSearchProjects()" autocomplete="off"
+            style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+          <div id="plan_results" style="max-height:180px;overflow-y:auto;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;display:none;background:#fff;margin-top:-2px"></div>
+          <div id="plan_selected" style="margin-top:6px;display:none;background:#f0f6ff;border-radius:8px;padding:8px 12px;font-size:.82rem;color:#1F4E79;font-weight:600"></div>
+          <input type="hidden" id="plan_proj_id">
+        </div>
+        <div class="fgrp">
+          <label>Start</label>
+          <div style="display:flex;gap:6px">
+            <select id="plan_start_month" style="flex:1;padding:7px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem"></select>
+            <select id="plan_start_week" style="width:70px;padding:7px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem">
+              <option value="1">W1</option><option value="2">W2</option>
+              <option value="3">W3</option><option value="4">W4</option>
+            </select>
+          </div>
+        </div>
+        <div class="fgrp">
+          <label>End</label>
+          <div style="display:flex;gap:6px">
+            <select id="plan_end_month" style="flex:1;padding:7px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem"></select>
+            <select id="plan_end_week" style="width:70px;padding:7px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem">
+              <option value="1">W1</option><option value="2">W2</option>
+              <option value="3">W3</option><option value="4" selected>W4</option>
+            </select>
+          </div>
+        </div>
+        <div class="fgrp full">
+          <label>Notes (optional)</label>
+          <input id="plan_notes" placeholder="e.g. neg mode only, 2 batches…" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" style="background:#f1f5f9;color:#475569" onclick="cm('planMov')">Cancel</button>
+      <button class="btn" style="background:#1F4E79;color:#fff" onclick="savePlanRow()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── USERS VIEW ── -->
 <div class="view" id="v-users">
   <div class="card">
@@ -1285,7 +1378,7 @@ const REV_GOAL = 20000000;
 
 // ── AUTH SYSTEM ──────────────────────────────────────────────────────────
 const DEFAULT_USERS = [
-  {id:1,  username:'admin',   password:'admin123',   name:'Administrator', role:'admin',    timetable_id:''},
+  {id:1,  username:'admin',   password:'chromatography', name:'Administrator', role:'admin',    timetable_id:''},
   {id:2,  username:'bib',     password:'bib123',     name:'Bib',           role:'manager',  timetable_id:''},
   {id:3,  username:'finance', password:'fin123',     name:'Finance Team',  role:'fin',      timetable_id:''},
   {id:4,  username:'maprang', password:'maprang123', name:'Maprang',        role:'ops',      timetable_id:'Maprang'},
@@ -1321,7 +1414,7 @@ function loadUsers(){
     });
     // Reset admin password to default (fix)
     const admin = merged.find(x=>x.username==='admin');
-    if(admin) admin.password='admin123';
+    if(admin) admin.password='chromatography';
     return merged;
   }
   return base;
@@ -1839,6 +1932,21 @@ async function initDashboard(){
     } else { console.warn('No wbcards in Firebase'); wbCards = loadWbCards(); }
   } catch(e){ console.error('Firebase timetable/wb load error:', e.code, e.message); ttTasks = loadTTTasks(); wbCards = loadWbCards(); }
   const _rqs=localStorage.getItem('lcms_rtqueue'); if(_rqs) rtQueueStore=JSON.parse(_rqs);
+  // Start real-time listener so queue is shared across all team devices
+  rtStartSharedListener();
+  // Load planning data
+  loadPlanData();
+  try{
+    const planSnap = await fbDB.ref('lcms/planning').get();
+    if(planSnap.exists()){
+      const val = planSnap.val();
+      if(val && typeof val === 'object'){
+        planData.tq   = Array.isArray(val.tq)   ? val.tq   : val.tq   ? Object.values(val.tq)   : [];
+        planData.qtof = Array.isArray(val.qtof) ? val.qtof : val.qtof ? Object.values(val.qtof) : [];
+      }
+      localStorage.setItem('lcms_plan', JSON.stringify(planData));
+    }
+  } catch(e){ console.warn('Plan load error:', e.message); }
   document.getElementById('asof').textContent = `Connected to Firebase · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
   buildYearPills('yearPills', y=>{activeYear=y; renderProjTable();});
   buildYearPills('stYearPills', y=>{activeYear=y; renderStatusGroups();});
@@ -3333,9 +3441,9 @@ function wbCalcRunTime(){
     const p = (D.projects||[]).find(x=>x.id===id);
     if(!p) return null;
     const samp = p.num_samples||0;
-    const total = samp * minsPerSamp;
+    const total = (samp + 1) * minsPerSamp; // +1 blank
     const hrs = Math.floor(total/60), mins = total%60;
-    return `P${p.project_no}: ${samp} smp × ${minsPerSamp} min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''}`;
+    return `P${p.project_no}: ${samp} smp + 1 blank × ${minsPerSamp} min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''}`;
   }).filter(Boolean);
   const totalMins = wbSelectedProjectIds.reduce((s,id)=>{
     const p=(D.projects||[]).find(x=>x.id===id); return s+(p?((p.num_samples||0)*minsPerSamp):0);
@@ -3544,11 +3652,66 @@ function psNav(dir){
 }
 function psNavToday(){ psWeekStart = weekMonday(new Date()); renderProjStatus(); }
 
+// Maps timetable task types → pipeline step IDs
+const TT_TYPE_TO_PS_STEP = {
+  'prep':     'sample_prep',
+  'acq':      'lc_ms_acq',
+  'data':     'data_analysis',
+  'revision': 'client_report',
+  'method':   'protocol',
+};
+const PS_STEP_ORDER = ['protocol','sample_prep','lc_ms_acq','data_analysis','client_report'];
+
+function inferTimelineFromTimetable(projId){
+  if(!ttTasks || !ttTasks.length) return false;
+  // Collect all timetable tasks that reference this project, sorted oldest→newest
+  const projTasks = ttTasks.filter(t=>(t.project_ids||[]).includes(projId))
+                           .sort((a,b)=>a.date.localeCompare(b.date));
+  if(!projTasks.length) return false;
+
+  // Collect per-step: who was assigned, latest date seen
+  const stepPeople  = {}; // stepId → Set of names
+  const stepSeen    = {}; // stepId → true
+  projTasks.forEach(t=>{
+    const sid = TT_TYPE_TO_PS_STEP[t.type];
+    if(!sid) return;
+    stepSeen[sid] = true;
+    if(!stepPeople[sid]) stepPeople[sid] = new Set();
+    if(t.person) stepPeople[sid].add(t.person);
+  });
+
+  const seenIds = PS_STEP_ORDER.filter(s=>stepSeen[s]);
+  if(!seenIds.length) return false;
+
+  // Furthest step seen = the most advanced one
+  const furthestIdx = Math.max(...seenIds.map(s=>PS_STEP_ORDER.indexOf(s)));
+
+  const tl = getTimeline(projId);
+  PS_STEP_ORDER.forEach((sid, idx)=>{
+    if(!tl.steps[sid]) tl.steps[sid] = {status:'pending', assignees:[]};
+    if(idx < furthestIdx){
+      tl.steps[sid].status = 'done';
+      if(stepPeople[sid]) tl.steps[sid].assignees = [...stepPeople[sid]];
+    } else if(idx === furthestIdx){
+      tl.steps[sid].status = 'current';
+      if(stepPeople[sid]) tl.steps[sid].assignees = [...stepPeople[sid]];
+    }
+    // Steps beyond furthest stay pending (don't overwrite if already set manually)
+  });
+  return true;
+}
+
 function getTimeline(projId){
   if(!D.timelines) D.timelines = {};
   if(!D.timelines[projId]){
-    D.timelines[projId] = { steps:{} };
+    D.timelines[projId] = { steps:{}, _autoInferred: false };
     PS_STEPS.forEach(s=>{ D.timelines[projId].steps[s.id] = {status:'pending', assignees:[]}; });
+  }
+  // Auto-infer from timetable if this project has never been manually set
+  const tl = D.timelines[projId];
+  const allPending = PS_STEPS.every(s=>(tl.steps[s.id]||{}).status==='pending');
+  if(allPending && !tl._manuallyEdited){
+    inferTimelineFromTimetable(projId);
   }
   return D.timelines[projId];
 }
@@ -3653,6 +3816,10 @@ function renderPsCard(p){
       <span class="ps-method-badge" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${p.method||'—'}</span>
       <span style="font-size:.72rem;color:#64748b">${p.num_samples||0} samples</span>
       ${statusBadge}
+      <button onclick="psSyncFromTimetable(${p.id})" title="Re-sync progress from timetable tasks"
+        style="margin-left:auto;padding:3px 10px;font-size:.68rem;background:#f0f6ff;color:#1F4E79;border:1px solid #bcd3ed;border-radius:8px;cursor:pointer;white-space:nowrap">
+        ↻ Sync from timetable
+      </button>
     </div>
     <div class="ps-timeline-wrap">
       <div style="display:flex;align-items:flex-start;position:relative">
@@ -3728,6 +3895,7 @@ function psToggleUser(name, checked){
   const {projId, stepId} = psPopoverCtx;
   const tl = getTimeline(projId);
   if(!tl.steps[stepId]) tl.steps[stepId]={status:'pending',assignees:[]};
+  tl._manuallyEdited = true;
   let arr = tl.steps[stepId].assignees||[];
   if(checked) arr = arr.includes(name) ? arr : [...arr, name];
   else        arr = arr.filter(x=>x!==name);
@@ -3737,11 +3905,27 @@ function psToggleUser(name, checked){
   if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
 }
 
+function psSyncFromTimetable(projId){
+  if(!D.timelines) D.timelines = {};
+  // Reset manual flag so inference can run fresh
+  if(D.timelines[projId]) D.timelines[projId]._manuallyEdited = false;
+  const updated = inferTimelineFromTimetable(projId);
+  if(updated){
+    saveTimelines();
+    const card = document.getElementById(`ps-proj-${projId}`);
+    if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
+    toast('Progress synced from timetable ✓');
+  } else {
+    toast('No timetable tasks found for this project');
+  }
+}
+
 function psSetStepStatus(status){
   if(!psPopoverCtx) return;
   const {projId, stepId} = psPopoverCtx;
   const tl = getTimeline(projId);
   if(!tl.steps[stepId]) tl.steps[stepId]={status:'pending',assignees:[]};
+  tl._manuallyEdited = true; // prevent auto-inference from overwriting manual edits
   // If setting current, unset any other current
   if(status==='current'){
     PS_STEPS.forEach(s=>{ if(tl.steps[s.id]&&tl.steps[s.id].status==='current') tl.steps[s.id].status='pending'; });
@@ -3752,24 +3936,319 @@ function psSetStepStatus(status){
   if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
 }
 
+// ── LONG-TERM PLANNING GANTT ─────────────────────────────────────────────
+let planData = { tq: [], qtof: [] };
+let planCollapsed = {}; // monthKey -> true if collapsed
+let planSelectedProj = null; // {id, project_no, customer, method}
+
+// Generate 18 months starting Jan 2026
+function planGetMonths(){
+  const months = [];
+  const base = new Date(2026, 0, 1);
+  for(let i=0;i<18;i++){
+    const d = new Date(base.getFullYear(), base.getMonth()+i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = d.toLocaleDateString('en-GB',{month:'short', year:'numeric'});
+    months.push({key, label, year:d.getFullYear(), month:d.getMonth()+1});
+  }
+  return months;
+}
+
+function planWeekIndex(months, monthKey, week){
+  const mi = months.findIndex(m=>m.key===monthKey);
+  if(mi<0) return -1;
+  return mi*4 + (parseInt(week)-1);
+}
+
+function savePlanData(){
+  localStorage.setItem('lcms_plan', JSON.stringify(planData));
+  if(fbAuth.currentUser) fbSave('planning', planData);
+}
+
+function loadPlanData(){
+  const s = localStorage.getItem('lcms_plan');
+  if(s){ try{ planData = JSON.parse(s); } catch(e){} }
+  if(!planData.tq) planData.tq=[];
+  if(!planData.qtof) planData.qtof=[];
+}
+
+function planMethodColor(method){
+  const m = (method||'').toLowerCase();
+  if(m.includes('metabolom') || m.includes('lipid') || m.includes('metabolite')) return {bg:'#dcfce7',text:'#166534',border:'#86efac'};
+  if(m.includes('proteom') || m.includes('peptidom')) return {bg:'#fce7f3',text:'#9d174d',border:'#f9a8d4'};
+  if(m.includes('peptide') || m.includes('protein') || m.includes('intact')) return {bg:'#ede9fe',text:'#5b21b6',border:'#c4b5fd'};
+  if(m.includes('quant')) return {bg:'#fef3c7',text:'#92400e',border:'#fcd34d'};
+  return {bg:'#f1f5f9',text:'#475569',border:'#cbd5e1'};
+}
+
+function renderPlanning(){
+  if(!planData.tq) planData.tq=[];
+  if(!planData.qtof) planData.qtof=[];
+  renderPlanGantt('tq');
+  renderPlanGantt('qtof');
+}
+
+function renderPlanGantt(instrument){
+  const wrap = document.getElementById('plan-'+instrument);
+  if(!wrap) return;
+  const months = planGetMonths();
+  const rows = planData[instrument]||[];
+
+  // Build header
+  let hdrMonth='', hdrWeek='';
+  hdrMonth += `<th class="plan-label-hdr" rowspan="2">Project</th>`;
+  months.forEach(m=>{
+    const collapsed = planCollapsed[m.key];
+    if(collapsed){
+      hdrMonth += `<th class="plan-month-hdr plan-collapsed-month" colspan="1" onclick="planToggleMonth('${m.key}')" title="Click to expand">${m.label.split(' ')[0]}</th>`;
+      hdrWeek += `<td class="plan-cell plan-collapsed-month" style="background:#f0f6ff;padding:0"></td>`;
+    } else {
+      hdrMonth += `<th class="plan-month-hdr" colspan="4" onclick="planToggleMonth('${m.key}')">${m.label} <span style="opacity:.6;font-size:.65rem">▲</span></th>`;
+      ['W1','W2','W3','W4'].forEach(w=>{
+        hdrWeek += `<th class="plan-week-hdr">${w}</th>`;
+      });
+    }
+  });
+
+  // Build rows
+  let rowsHtml = rows.map(row=>{
+    const mc = planMethodColor(row.method);
+    const startIdx = planWeekIndex(months, row.start_month, row.start_week);
+    const endIdx   = planWeekIndex(months, row.end_month,   row.end_week);
+    let cells = '';
+    let colIdx = 0;
+    months.forEach(m=>{
+      if(planCollapsed[m.key]){
+        // Single collapsed cell — check if bar passes through this month
+        const mStart = planWeekIndex(months, m.key, 1);
+        const mEnd   = planWeekIndex(months, m.key, 4);
+        const hasBar = startIdx <= mEnd && endIdx >= mStart;
+        cells += `<td class="plan-cell plan-collapsed-month" style="background:${hasBar?mc.bg:'#fafafa'}"></td>`;
+        colIdx++;
+      } else {
+        for(let w=1;w<=4;w++){
+          const ci = planWeekIndex(months, m.key, w);
+          const inRange = ci>=startIdx && ci<=endIdx;
+          const isStart = ci===startIdx;
+          const isEnd   = ci===endIdx;
+          let barClass = '';
+          if(inRange){
+            if(isStart && isEnd) barClass='b-solo';
+            else if(isStart)     barClass='b-start';
+            else if(isEnd)       barClass='b-end';
+            else                 barClass='b-mid';
+          }
+          cells += `<td class="plan-cell">
+            ${inRange?`<div class="plan-bar ${barClass}" style="background:${mc.bg};border-top:2px solid ${mc.border};border-bottom:2px solid ${mc.border};${isStart?'border-left:2px solid '+mc.border+';':''} ${isEnd?'border-right:2px solid '+mc.border+';':''}"></div>`:''}
+          </td>`;
+          colIdx++;
+        }
+      }
+    });
+    const noteStr = row.notes ? `<span style="font-size:.62rem;color:#94a3b8;display:block;margin-top:1px">${row.notes}</span>` : '';
+    return `<tr>
+      <td class="plan-row-label">
+        <button class="plan-del-btn edit-btn" onclick="planDeleteRow('${instrument}',${row.id})">×</button>
+        <span class="plan-proj-no">P${row.project_no}</span>
+        <span class="plan-proj-cust">${row.customer||''}</span>
+        <span class="plan-method-tag" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${row.method||'—'}</span>
+        ${noteStr}
+      </td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<table class="plan-table">
+    <thead>
+      <tr>${hdrMonth}</tr>
+      <tr>${hdrWeek}</tr>
+    </thead>
+    <tbody>
+      ${rowsHtml}
+      <tr class="plan-add-row" onclick="openPlanModal('${instrument}')">
+        <td colspan="${1 + months.reduce((s,m)=>s+(planCollapsed[m.key]?1:4),0)}">+ Add project row</td>
+      </tr>
+    </tbody>
+  </table>`;
+}
+
+function planToggleMonth(monthKey){
+  planCollapsed[monthKey] = !planCollapsed[monthKey];
+  renderPlanning();
+}
+
+function openPlanModal(instrument, editId=null){
+  planSelectedProj = null;
+  document.getElementById('plan_instrument').value = instrument;
+  document.getElementById('plan_edit_id').value = editId||'';
+  document.getElementById('planMTitle').textContent = (editId?'Edit':'Add') + ' Project — ' + instrument.toUpperCase();
+  document.getElementById('plan_search').value = '';
+  document.getElementById('plan_results').style.display = 'none';
+  document.getElementById('plan_selected').style.display = 'none';
+  document.getElementById('plan_selected').textContent = '';
+  document.getElementById('plan_proj_id').value = '';
+  document.getElementById('plan_notes').value = '';
+
+  // Populate month dropdowns
+  const months = planGetMonths();
+  const opts = months.map(m=>`<option value="${m.key}">${m.label}</option>`).join('');
+  document.getElementById('plan_start_month').innerHTML = opts;
+  document.getElementById('plan_end_month').innerHTML   = opts;
+
+  // If editing, pre-fill
+  if(editId){
+    const instrument2 = document.getElementById('plan_instrument').value;
+    const row = (planData[instrument2]||[]).find(r=>r.id===editId);
+    if(row){
+      planSelectedProj = {id:row.project_id, project_no:row.project_no, customer:row.customer, method:row.method};
+      document.getElementById('plan_selected').textContent = `P${row.project_no} — ${row.customer||''}`;
+      document.getElementById('plan_selected').style.display = 'block';
+      document.getElementById('plan_proj_id').value = row.project_id;
+      document.getElementById('plan_start_month').value = row.start_month;
+      document.getElementById('plan_start_week').value  = row.start_week;
+      document.getElementById('plan_end_month').value   = row.end_month;
+      document.getElementById('plan_end_week').value    = row.end_week;
+      document.getElementById('plan_notes').value       = row.notes||'';
+    }
+  }
+  document.getElementById('planMov').classList.add('open');
+}
+
+function planSearchProjects(){
+  const q = document.getElementById('plan_search').value.toLowerCase().trim();
+  const res = document.getElementById('plan_results');
+  if(!q){ res.style.display='none'; return; }
+  const matches = (D.projects||[]).filter(p=>
+    String(p.project_no).toLowerCase().includes(q) ||
+    (p.customer||'').toLowerCase().includes(q) ||
+    (p.project_detail||'').toLowerCase().includes(q)
+  ).slice(0,12);
+  if(!matches.length){ res.style.display='none'; return; }
+  res.innerHTML = matches.map(p=>`
+    <div onclick="planSelectProj(${p.id})" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:.82rem;transition:background .12s"
+      onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background=''">
+      <strong style="color:#1F4E79">P${p.project_no}</strong>
+      <span style="color:#64748b;margin-left:6px">${p.customer||''}</span>
+      <span style="float:right;font-size:.7rem;color:#94a3b8">${p.method||''}</span>
+    </div>
+  `).join('');
+  res.style.display = 'block';
+}
+
+function planSelectProj(id){
+  const p = (D.projects||[]).find(x=>x.id===id);
+  if(!p) return;
+  planSelectedProj = {id:p.id, project_no:p.project_no, customer:p.customer, method:p.method};
+  document.getElementById('plan_proj_id').value = id;
+  document.getElementById('plan_search').value = '';
+  document.getElementById('plan_results').style.display = 'none';
+  document.getElementById('plan_selected').textContent = `P${p.project_no} — ${p.customer||''} (${p.method||'—'})`;
+  document.getElementById('plan_selected').style.display = 'block';
+}
+
+function savePlanRow(){
+  const instrument  = document.getElementById('plan_instrument').value;
+  const projId      = parseInt(document.getElementById('plan_proj_id').value)||0;
+  const startMonth  = document.getElementById('plan_start_month').value;
+  const startWeek   = parseInt(document.getElementById('plan_start_week').value)||1;
+  const endMonth    = document.getElementById('plan_end_month').value;
+  const endWeek     = parseInt(document.getElementById('plan_end_week').value)||4;
+  const notes       = document.getElementById('plan_notes').value.trim();
+  const editId      = document.getElementById('plan_edit_id').value;
+
+  if(!projId){ toast('Please select a project first'); return; }
+
+  const months = planGetMonths();
+  const si = planWeekIndex(months, startMonth, startWeek);
+  const ei = planWeekIndex(months, endMonth,   endWeek);
+  if(ei < si){ toast('End must be on or after start'); return; }
+
+  const p = (D.projects||[]).find(x=>x.id===projId);
+  const row = {
+    id: editId ? parseInt(editId) : Date.now(),
+    project_id: projId,
+    project_no: p?.project_no||'?',
+    customer:   p?.customer||'',
+    method:     p?.method||'',
+    start_month: startMonth, start_week: startWeek,
+    end_month:   endMonth,   end_week:   endWeek,
+    notes
+  };
+
+  if(!planData[instrument]) planData[instrument]=[];
+  if(editId){
+    const i = planData[instrument].findIndex(r=>r.id===parseInt(editId));
+    if(i>=0) planData[instrument][i]=row; else planData[instrument].push(row);
+  } else {
+    planData[instrument].push(row);
+  }
+  savePlanData();
+  cm('planMov');
+  toast('Saved ✓');
+  renderPlanning();
+}
+
+function planDeleteRow(instrument, id){
+  if(!confirm('Remove this project from the plan?')) return;
+  planData[instrument] = (planData[instrument]||[]).filter(r=>r.id!==id);
+  savePlanData();
+  renderPlanning();
+  toast('Removed');
+}
+
 // ── RUN TIME CALCULATOR ───────────────────────────────────────────────────
 let rtQueueStore = {}; // keyed by week ISO date
 let rtQueue = [];
+let _rtQueueListenerActive = false;
 
 function rtGetWeekKey(){ return ttWeekStart ? isoDate(ttWeekStart) : isoDate(weekMonday(new Date())); }
 function rtLoadQueue(){ 
   const k=rtGetWeekKey(); 
   rtQueue=(rtQueueStore[k]||[]);
-  // Restore saved start time
+  // Restore saved start time + day
   const meta = rtQueueStore[k+'_meta'];
   const startEl = document.getElementById('rtStart');
+  const startDayEl = document.getElementById('rtStartDay');
   if(meta?.startTime && startEl) startEl.value = meta.startTime;
+  if(meta?.startDay != null && startDayEl) startDayEl.value = meta.startDay;
 }
 function rtSaveQueue(){
   const k=rtGetWeekKey();
   rtQueueStore[k]=rtQueue;
+  // Save start day too
+  const startEl = document.getElementById('rtStart');
+  const startDayEl = document.getElementById('rtStartDay');
+  if(startEl || startDayEl){
+    rtQueueStore[k+'_meta'] = {
+      startTime: startEl?.value || '08:00',
+      startDay:  startDayEl ? parseInt(startDayEl.value)||0 : 0
+    };
+  }
   localStorage.setItem('lcms_rtqueue', JSON.stringify(rtQueueStore));
+  // Push to Firebase — the real-time listener on all devices will pick this up
   if(fbAuth.currentUser) fbSave('rtqueue', rtQueueStore);
+}
+
+function rtStartSharedListener(){
+  if(_rtQueueListenerActive) return;
+  _rtQueueListenerActive = true;
+  fbDB.ref('lcms/rtqueue').on('value', snap=>{
+    if(!snap.exists()) return;
+    const val = snap.val();
+    // Normalize: Firebase may return array-like object
+    const store = {};
+    if(val && typeof val === 'object'){
+      Object.entries(val).forEach(([k,v])=>{
+        store[k] = Array.isArray(v) ? v : (v && typeof v==='object' && !v.startTime) ? Object.values(v) : v;
+      });
+    }
+    rtQueueStore = store;
+    localStorage.setItem('lcms_rtqueue', JSON.stringify(rtQueueStore));
+    rtLoadQueue();
+    // Re-render queue if the timetable tab is active
+    const queueEl = document.getElementById('rtQueue');
+    if(queueEl && queueEl.offsetParent !== null) rtRenderQueue();
+  });
 }
 
 const RT_MINS = {
@@ -3862,7 +4341,7 @@ function rtRenderQueue(){
 
   const rows = rtQueue.map((item, i) => {
     const minsPerSamp = RT_MINS[item.method]||0;
-    const totalMins = item.num_samples * minsPerSamp;
+    const totalMins = (item.num_samples + 1) * minsPerSamp; // +1 blank per project
     const startTimeLabel = minsToTimeWithDay(currentMins, currentDayOffset, startDayI, DAYS);
     currentMins += totalMins;
     // Advance day offset for overnight runs
@@ -4426,7 +4905,7 @@ function ttCalcRunTime(ids){
     const method = p.method||'';
     const minsPerSamp = RUN_TIME[method]||0;
     if(!minsPerSamp){ rows.push(`P${p.project_no}: method "${method}" — run time not configured`); return; }
-    const total = samp * minsPerSamp;
+    const total = (samp + 1) * minsPerSamp; // +1 blank
     totalMins += total;
     const hrs = Math.floor(total/60), mins = total%60;
     let detail_str = '';
