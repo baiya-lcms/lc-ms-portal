@@ -3446,7 +3446,7 @@ function wbCalcRunTime(){
     return `P${p.project_no}: ${samp} smp + 1 blank × ${minsPerSamp} min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''}`;
   }).filter(Boolean);
   const totalMins = wbSelectedProjectIds.reduce((s,id)=>{
-    const p=(D.projects||[]).find(x=>x.id===id); return s+(p?((p.num_samples||0)*minsPerSamp):0);
+    const p=(D.projects||[]).find(x=>x.id===id); return s+(p?(((p.num_samples||0)+1)*minsPerSamp):0);
   },0);
   if(box) box.style.display='';
   if(detail) detail.innerHTML = rows.join('<br>') + (rows.length>1?`<br><b>Total: ${Math.floor(totalMins/60)}h ${totalMins%60}m</b>`:'');
@@ -3537,7 +3537,7 @@ function saveWbCard(){
   const minsPerSamp = RUN_TIME[method]||0;
   const runMins = wbSelectedProjectIds.reduce((s,id)=>{
     const p=(D.projects||[]).find(x=>x.id===id);
-    return s+(p?((p.num_samples||0)*minsPerSamp):0);
+    return s+(p?(((p.num_samples||0)+1)*minsPerSamp):0);
   },0);
   const card = {
     id: existingId ? parseInt(existingId) : Date.now(),
@@ -3816,10 +3816,16 @@ function renderPsCard(p){
       <span class="ps-method-badge" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${p.method||'—'}</span>
       <span style="font-size:.72rem;color:#64748b">${p.num_samples||0} samples</span>
       ${statusBadge}
-      <button onclick="psSyncFromTimetable(${p.id})" title="Re-sync progress from timetable tasks"
-        style="margin-left:auto;padding:3px 10px;font-size:.68rem;background:#f0f6ff;color:#1F4E79;border:1px solid #bcd3ed;border-radius:8px;cursor:pointer;white-space:nowrap">
-        ↻ Sync from timetable
-      </button>
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <button onclick="editProjId(${p.id})" title="Edit project details" class="edit-btn"
+          style="padding:3px 10px;font-size:.68rem;background:#f8fafc;color:#475569;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;white-space:nowrap">
+          ✏️ Edit
+        </button>
+        <button onclick="psSyncFromTimetable(${p.id})" title="Re-sync progress from timetable tasks"
+          style="padding:3px 10px;font-size:.68rem;background:#f0f6ff;color:#1F4E79;border:1px solid #bcd3ed;border-radius:8px;cursor:pointer;white-space:nowrap">
+          ↻ Sync from timetable
+        </button>
+      </div>
     </div>
     <div class="ps-timeline-wrap">
       <div style="display:flex;align-items:flex-start;position:relative">
@@ -4048,11 +4054,18 @@ function renderPlanGantt(instrument){
     const noteStr = row.notes ? `<span style="font-size:.62rem;color:#94a3b8;display:block;margin-top:1px">${row.notes}</span>` : '';
     return `<tr>
       <td class="plan-row-label">
-        <button class="plan-del-btn edit-btn" onclick="planDeleteRow('${instrument}',${row.id})">×</button>
-        <span class="plan-proj-no">P${row.project_no}</span>
-        <span class="plan-proj-cust">${row.customer||''}</span>
-        <span class="plan-method-tag" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${row.method||'—'}</span>
-        ${noteStr}
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+          <div style="flex:1;min-width:0">
+            <span class="plan-proj-no">P${row.project_no}</span>
+            <span class="plan-proj-cust">${row.customer||''}</span>
+            <span class="plan-method-tag" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${row.method||'—'}</span>
+            ${noteStr}
+          </div>
+          <button onclick="event.stopPropagation();planDeleteRow('${instrument}',${row.id})"
+            title="Remove from plan"
+            style="flex-shrink:0;padding:2px 7px;font-size:.72rem;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;line-height:1.4"
+            onmouseover="this.style.background='#fca5a5'" onmouseout="this.style.background='#fee2e2'">✕</button>
+        </div>
       </td>
       ${cells}
     </tr>`;
@@ -4284,7 +4297,7 @@ function rtFilterProjects(){
   const filtered = q ? active.filter(p=>String(p.project_no).toLowerCase().includes(q)||(p.customer||'').toLowerCase().includes(q)) : active;
   sel.innerHTML = filtered.slice(0,60).map(p=>{
     const minsPerSamp = RT_MINS[p.method]||0;
-    const total = (p.num_samples||0) * minsPerSamp;
+    const total = ((p.num_samples||0) + 1) * minsPerSamp; // +1 blank
     const timeStr = total ? ` → ${total>=60?Math.floor(total/60)+'h'+(total%60?total%60+'m':''):total+'m'}` : '';
     return `<option value="${p.id}">P${p.project_no} · ${p.customer||'?'} · ${p.method||'—'} (${p.num_samples||0} smp${timeStr})</option>`;
   }).join('');
@@ -4912,7 +4925,7 @@ function ttCalcRunTime(ids){
     if(method==='Metabolomics'||method==='Lipidomics'){
       detail_str = ` (${samp} smp × 20min × 2 modes = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''})`;
     } else {
-      detail_str = ` (${samp} smp × ${minsPerSamp}min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''})`;
+      detail_str = ` (${samp}+1 blank × ${minsPerSamp}min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''})`;
     }
     rows.push(`<b>P${p.project_no}</b> ${method}${detail_str}`);
   });
