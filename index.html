@@ -1953,7 +1953,7 @@ async function initDashboard(){
     const tlSnap = await fbDB.ref('lcms/timelines').get();
     if(tlSnap.exists()){ D.timelines = tlSnap.val(); console.log('Timelines loaded from Firebase'); }
     const ttSnap = await fbDB.ref('lcms/timetable').get();
-    if(ttSnap.exists()){ ttTasks = fbArr(ttSnap.val()); console.log('Timetable loaded:', ttTasks.length, 'tasks'); }
+    if(ttSnap.exists()){ ttTasks = fbArr(ttSnap.val()).map(normTTask||((t)=>t)); console.log('Timetable loaded:', ttTasks.length, 'tasks'); }
     else { console.warn('No timetable data in Firebase'); ttTasks = loadTTTasks(); }
     const wbSnap = await fbDB.ref('lcms/wbcards').get();
     if(wbSnap.exists()){
@@ -3777,7 +3777,7 @@ const PS_STEP_ORDER = ['protocol','sample_prep','lc_ms_acq','data_analysis','cli
 function inferTimelineFromTimetable(projId){
   if(!ttTasks || !ttTasks.length) return false;
   // Collect all timetable tasks that reference this project, sorted oldest→newest
-  const projTasks = ttTasks.filter(t=>(t.project_ids||[]).includes(projId))
+  const projTasks = ttTasks.filter(t=>(Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number).includes(Number(projId)))
                            .sort((a,b)=>a.date.localeCompare(b.date));
   if(!projTasks.length) return false;
 
@@ -3833,7 +3833,20 @@ function saveTimelines(){
   if(fbAuth.currentUser) fbSave('timelines', D.timelines);
 }
 
+function normTTask(t){
+  // Ensure project_ids is always a real array (Firebase may return {0:x,1:y})
+  if(t && t.project_ids && !Array.isArray(t.project_ids))
+    t.project_ids = Object.values(t.project_ids).map(Number);
+  else if(t && t.project_ids)
+    t.project_ids = t.project_ids.map(Number);
+  return t;
+}
+
 function renderProjStatus(){
+  // Ensure ttTasks is loaded (may be null if Firebase hasn't responded yet)
+  if(!ttTasks){ ttTasks = loadTTTasks(); }
+  // Normalise all tasks
+  if(Array.isArray(ttTasks)) ttTasks.forEach(normTTask);
   if(!psWeekStart) psWeekStart = ttWeekStart || weekMonday(new Date());
 
   const wl = document.getElementById('psWeekLabel');
@@ -3863,7 +3876,7 @@ function renderProjStatus(){
       (ttTasks||[]).filter(t=>{
         const d = new Date(t.date+'T00:00:00');
         return d >= psWeekStart && d <= wEnd;
-      }).flatMap(t=>(t.project_ids||[]).map(id=>Number(id))) // normalise to numbers
+      }).flatMap(t=>(Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number))
     );
     projects = [...weekProjIds].map(id=>(D.projects||[]).find(p=>Number(p.id)===id)).filter(Boolean);
   } else {
@@ -4747,7 +4760,7 @@ function renderTimetable(){
       // Interns can edit tasks on their own row
       const canAddEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || isMyRow;
       let chips = tasks.map(t=>{
-        const projIds = t.project_ids||[];
+        const projIds = Array.isArray(t.project_ids)?t.project_ids.map(Number):Object.values(t.project_ids||{}).map(Number);
         const projs = (D&&D.projects)||[];
 
         // Get method from first project
