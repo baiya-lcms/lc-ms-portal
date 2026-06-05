@@ -792,6 +792,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
   <div style="padding:8px 14px;border-top:1px solid #f1f5f9;display:flex;gap:6px" id="ttDetailFooter">
     <button id="ttDetailEditBtn" onclick="ttDetailEdit()" style="flex:1;padding:6px;background:#1F4E79;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600">✏️ Edit</button>
     <button id="ttDetailDelBtn" onclick="ttDetailDelete()" style="padding:6px 10px;background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600">🗑</button>
+    <button id="ttDetailDelAllBtn" onclick="ttDetailDeleteAll()" title="Delete this task + all its copies this week" style="display:none;padding:6px 10px;background:#7f1d1d;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600">🗑 All</button>
   </div>
 </div>
 <div class="view" id="v-timetable">
@@ -959,10 +960,15 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
           <input type="checkbox" id="ttIsBackground" style="width:16px;height:16px;accent-color:#94a3b8" onchange="document.getElementById('ttRecurringWrap').style.display=this.checked?'flex':'none'">
           <span style="color:#64748b">🔁 Background / recurring task</span>
         </label>
-        <span id="ttRecurringWrap" style="display:none;align-items:center;gap:6px">
-          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.78rem;color:#475569">
-            <input type="checkbox" id="ttIsRecurring" style="width:14px;height:14px;accent-color:#475569">
-            <span>Repeat every week automatically</span>
+        <span id="ttRecurringWrap" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-size:.76rem;color:#475569;font-weight:600">Repeat:</span>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.76rem;color:#475569">
+            <input type="radio" name="ttRecurScope" id="ttRecurWeek" value="week" style="accent-color:#475569" checked>
+            <span>This week only</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.76rem;color:#475569">
+            <input type="radio" name="ttRecurScope" id="ttRecurForever" value="forever" style="accent-color:#475569">
+            <span>Every week (forever)</span>
           </label>
         </span>
       </div>
@@ -4217,7 +4223,10 @@ function openTTDetail(taskId, event){
   }
 
   if(t.needs_stat) body += `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:5px 9px;color:#b91c1c;font-size:.73rem;font-weight:600">🔴 Statistical analysis required</div>`;
-  if(t.is_background) body += `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:5px 9px;color:#64748b;font-size:.73rem;font-style:italic">Background / long-term task</div>`;
+  if(t.is_background){
+    const recurLabel = t.recurring==='forever' ? '🔁 Repeats every week' : t.recurring==='week' ? '🔁 Repeats this week only' : '⬜ One-time background task';
+    body += `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:5px 9px;color:#64748b;font-size:.73rem;font-style:italic">${recurLabel}</div>`;
+  }
   if(t.desc) body += `<div><span style="color:#64748b;font-size:.72rem">📝 Notes</span><br>${t.desc}</div>`;
 
   body += '</div>';
@@ -4225,6 +4234,16 @@ function openTTDetail(taskId, event){
 
   const footer = document.getElementById('ttDetailFooter');
   if(footer) footer.style.display = canEdit ? 'flex' : 'none';
+
+  // Show "Delete All" button only for tasks with a repeat_id (recurring copies)
+  const delAllBtn = document.getElementById('ttDetailDelAllBtn');
+  if(delAllBtn){
+    const hasRepeat = !!(t.repeat_id || t.recurring);
+    delAllBtn.style.display = (canEdit && hasRepeat) ? '' : 'none';
+    delAllBtn.title = t.recurring==='forever'
+      ? 'Delete this + ALL future copies (stops recurring)'
+      : 'Delete this + all copies this week';
+  }
 
   // Position popover — ensure it fits in viewport
   const pop = document.getElementById('ttDetailPop');
@@ -4271,16 +4290,60 @@ function ttDetailEdit(){
 }
 function ttDetailDelete(){
   const id = ttDetailTaskId;
-  if(!id||!confirm('Delete this task?')) return;
+  if(!id) return;
+  const t = ttTasks.find(x=>x.id===id);
+  if(!t) return;
+  if(!confirm('Delete just this one task?')) return;
   closeTTDetail();
-  ttTasks = ttTasks.filter(t=>t.id!==id);
+  ttTasks = ttTasks.filter(x=>x.id!==id);
   saveTTTasks();
   renderTimetable();
   toast('Task deleted');
 }
 
+function ttDetailDeleteAll(){
+  const id = ttDetailTaskId;
+  if(!id) return;
+  const t = ttTasks.find(x=>x.id===id);
+  if(!t) return;
+  const isForever = t.recurring==='forever';
+  const label = isForever
+    ? 'Delete this task AND all future repeating copies? (This will stop it from recurring)'
+    : 'Delete this task AND all its copies this week?';
+  if(!confirm(label)) return;
+  closeTTDetail();
+
+  if(t.repeat_id){
+    // Delete all tasks sharing this repeat_id
+    const count = ttTasks.filter(x=>x.repeat_id===t.repeat_id).length;
+    ttTasks = ttTasks.filter(x=>x.repeat_id!==t.repeat_id);
+    saveTTTasks();
+    renderTimetable();
+    toast(`🗑 Deleted ${count} task${count!==1?'s':''} (all copies removed)`);
+  } else {
+    // Fallback: match by person + type + project_ids (for old tasks without repeat_id)
+    const projKey = (t.project_ids||[]).slice().sort().join(',');
+    const ws = ttWeekStart || weekMonday(new Date());
+    const wStart = isoDate(ws);
+    const wEndD = new Date(ws); wEndD.setDate(wEndD.getDate()+6);
+    const wEnd = isoDate(wEndD);
+    const count = ttTasks.filter(x=>
+      x.person===t.person && x.type===t.type && x.is_background &&
+      (x.project_ids||[]).slice().sort().join(',')===projKey &&
+      (isForever || (x.date>=wStart && x.date<=wEnd))
+    ).length;
+    ttTasks = ttTasks.filter(x=>!(
+      x.person===t.person && x.type===t.type && x.is_background &&
+      (x.project_ids||[]).slice().sort().join(',')===projKey &&
+      (isForever || (x.date>=wStart && x.date<=wEnd))
+    ));
+    saveTTTasks();
+    renderTimetable();
+    toast(`🗑 Deleted ${count} task${count!==1?'s':''} (all matched copies removed)`);
+  }
+}
+
 function ttInjectRecurringTasks(){
-  // Auto-populate recurring background tasks for the current viewed week
   if(!ttTasks) return;
   const ws = ttWeekStart || weekMonday(new Date());
   const weekDates = [];
@@ -4288,16 +4351,14 @@ function ttInjectRecurringTasks(){
     const d = new Date(ws); d.setDate(d.getDate()+i);
     weekDates.push(isoDate(d));
   }
-  // Find all recurring tasks — use any week's instance as the template
-  const recurring = ttTasks.filter(t=>t.recurring && t.is_background);
+  // Only inject 'forever' recurring tasks — 'week' scope tasks are injected at save time
+  const recurring = ttTasks.filter(t=>t.recurring==='forever' && t.is_background);
   let added = 0;
   recurring.forEach(template=>{
-    // Find which day-of-week this task runs on (0=Mon…6=Sun based on its stored date)
     const srcDate = new Date(template.date+'T00:00:00');
-    const dow = (srcDate.getDay()+6)%7; // 0=Mon, 6=Sun
+    const dow = (srcDate.getDay()+6)%7;
     const targetDate = weekDates[dow];
     if(!targetDate) return;
-    // Check if already exists for this week (same person, type, projects, day)
     const projKey = (template.project_ids||[]).slice().sort().join(',');
     const exists = ttTasks.some(t=>
       t.date===targetDate &&
@@ -4310,7 +4371,8 @@ function ttInjectRecurringTasks(){
       ttTasks.push({
         ...template,
         id: ttNextId(),
-        date: targetDate
+        date: targetDate,
+        repeat_id: template.repeat_id || ('R'+template.id)
       });
       added++;
     }
@@ -4779,7 +4841,7 @@ function openTTModal(person='', date=''){
   const rbox=document.getElementById('tt_runtime_box'); if(rbox) rbox.style.display='none';
   const statEl=document.getElementById('ttNeedsStat'); if(statEl) statEl.checked=false;
   const bgEl=document.getElementById('ttIsBackground'); if(bgEl) bgEl.checked=false;
-  const recEl=document.getElementById('ttIsRecurring'); if(recEl) recEl.checked=false;
+  const recWeekEl=document.getElementById('ttRecurWeek'); if(recWeekEl) recWeekEl.checked=true;
   const recWrap=document.getElementById('ttRecurringWrap'); if(recWrap) recWrap.style.display='none';
   document.getElementById('ttMov').classList.add('open');
 }
@@ -4809,8 +4871,9 @@ function editTTTask(id){
   document.getElementById('ttDelBtn').style.display='inline-flex';
   const statEl2=document.getElementById('ttNeedsStat'); if(statEl2) statEl2.checked=!!(t.needs_stat);
   const bgEl2=document.getElementById('ttIsBackground'); if(bgEl2) bgEl2.checked=!!(t.is_background);
-  const recEl2=document.getElementById('ttIsRecurring'); if(recEl2) recEl2.checked=!!(t.recurring);
   const recWrap2=document.getElementById('ttRecurringWrap'); if(recWrap2) recWrap2.style.display=t.is_background?'flex':'none';
+  if(t.recurring==='forever'||t.recurring===true){ const el=document.getElementById('ttRecurForever'); if(el) el.checked=true; }
+  else { const el=document.getElementById('ttRecurWeek'); if(el) el.checked=true; }
   document.getElementById('ttMov').classList.add('open');
 }
 
@@ -4915,16 +4978,34 @@ function saveTTTask(){
     desc=typeLabel?`${typeLabel} ${projPart}`:projPart;
   }
   const is_background = !!(document.getElementById('ttIsBackground')?.checked);
-  const recurring = is_background && !!(document.getElementById('ttIsRecurring')?.checked);
+  const recurScope = is_background ? (document.querySelector('input[name="ttRecurScope"]:checked')?.value||'none') : 'none';
+  const recurring = recurScope !== 'none' ? recurScope : false; // 'week', 'forever', or false
   const needs_stat = !!(document.getElementById('ttNeedsStat')?.checked);
   const is_bg_old = id ? (ttTasks.find(t=>t.id===parseInt(id))||{}).is_background : false;
   if(!date){toast('Date is required');return;}
   if(!desc&&!project_ids.length){toast('Add at least one project or a description');return;}
+  // For recurring tasks, generate a repeat_id to link all copies
+  const existingTask = id ? ttTasks.find(t=>t.id===parseInt(id)) : null;
+  const repeat_id = recurring ? (existingTask?.repeat_id || ('R'+Date.now())) : null;
   if(id){
     const i=ttTasks.findIndex(t=>t.id===parseInt(id));
-    if(i>=0) ttTasks[i]={...ttTasks[i],person,date,type,desc,project_ids,is_background,recurring,needs_stat};
+    if(i>=0) ttTasks[i]={...ttTasks[i],person,date,type,desc,project_ids,is_background,recurring,needs_stat,repeat_id};
   } else {
-    ttTasks.push({id:ttNextId(),person,date,type,desc,project_ids,is_background,recurring,needs_stat});
+    ttTasks.push({id:ttNextId(),person,date,type,desc,project_ids,is_background,recurring,needs_stat,repeat_id});
+    // For 'week' scope, inject across all days of the current week immediately
+    if(recurring==='week'){
+      const ws = ttWeekStart || weekMonday(new Date());
+      const weekDates=[];
+      for(let i=0;i<7;i++){ const d=new Date(ws); d.setDate(d.getDate()+i); weekDates.push(isoDate(d)); }
+      const srcDow = (new Date(date+'T00:00:00').getDay()+6)%7;
+      const template = ttTasks[ttTasks.length-1];
+      weekDates.forEach(wd=>{
+        if(wd===date) return; // skip source day
+        const projKey=(project_ids||[]).slice().sort().join(',');
+        const dup=ttTasks.some(t=>t.date===wd&&t.person===person&&t.type===type&&t.is_background&&(t.project_ids||[]).slice().sort().join(',')===projKey);
+        if(!dup) ttTasks.push({...template,id:ttNextId(),date:wd,repeat_id});
+      });
+    }
   }
   saveTTTasks();
   cm('ttMov');
