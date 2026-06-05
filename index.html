@@ -1704,6 +1704,11 @@ function handleWorkStatusImport(input){
 
       const projects = [];
       const clientMap = {};
+      // Build map of existing project_no -> id so re-imports keep stable IDs
+      // This ensures timetable task project_ids don't shift when rows are inserted
+      const existingProjMap = {};
+      (D.projects||[]).forEach(p=>{ if(p.project_no) existingProjMap[String(p.project_no)] = p.id; });
+      const maxExistingId = (D.projects||[]).reduce((m,p)=>Math.max(m,p.id||0),0);
       for(let i=2; i<rows.length; i++){
         const r = rows[i];
         const pno = fmt(r[col('Project no.')]);
@@ -1721,7 +1726,7 @@ function handleWorkStatusImport(input){
         if(cust) clientMap[cust].project_count++;
 
         projects.push({
-          id: projects.length+1, project_no:pno,
+          id: existingProjMap[pno] || (maxExistingId + projects.length + 1), project_no:pno,
           customer:cust, client_id: clientMap[cust]?.id||0,
           affiliation:aff,
           project_detail: fmt(r[col('Project detail')]),
@@ -4185,8 +4190,8 @@ let ttDetailTaskId = null;
 
 function openTTDetail(taskId, event){
   event.stopPropagation();
-  ttDetailTaskId = taskId;
-  const t = ttTasks.find(x=>x.id===taskId);
+  ttDetailTaskId = parseInt(taskId); // always numeric — Firebase may stringify
+  const t = ttTasks.find(x=>parseInt(x.id)===ttDetailTaskId);
   if(!t) return;
 
   const isOwnTask = currentUser && t && t.person === currentUser.timetable_id;
@@ -4224,7 +4229,7 @@ function openTTDetail(taskId, event){
 
   if(t.needs_stat) body += `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:5px 9px;color:#b91c1c;font-size:.73rem;font-weight:600">🔴 Statistical analysis required</div>`;
   if(t.is_background){
-    const recurLabel = t.recurring==='forever' ? '🔁 Repeats every week' : t.recurring==='week' ? '🔁 Repeats this week only' : '⬜ One-time background task';
+    const recurLabel = (t.recurring==='forever'||t.recurring===true) ? '🔁 Repeats every week' : t.recurring==='week' ? '🔁 Repeats this week only' : '⬜ One-time background task';
     body += `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:5px 9px;color:#64748b;font-size:.73rem;font-style:italic">${recurLabel}</div>`;
   }
   if(t.desc) body += `<div><span style="color:#64748b;font-size:.72rem">📝 Notes</span><br>${t.desc}</div>`;
@@ -4235,14 +4240,17 @@ function openTTDetail(taskId, event){
   const footer = document.getElementById('ttDetailFooter');
   if(footer) footer.style.display = canEdit ? 'flex' : 'none';
 
-  // Show "Delete All" button only for tasks with a repeat_id (recurring copies)
+  // Show "Delete All" button for any background/recurring task
   const delAllBtn = document.getElementById('ttDetailDelAllBtn');
   if(delAllBtn){
-    const hasRepeat = !!(t.repeat_id || t.recurring);
-    delAllBtn.style.display = (canEdit && hasRepeat) ? '' : 'none';
-    delAllBtn.title = t.recurring==='forever'
-      ? 'Delete this + ALL future copies (stops recurring)'
-      : 'Delete this + all copies this week';
+    if(canEdit && (t.is_background || t.recurring || t.repeat_id)){
+      delAllBtn.style.cssText = 'display:inline-flex;padding:6px 10px;background:#7f1d1d;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600;align-items:center;gap:4px';
+      delAllBtn.title = (t.recurring==='forever'||t.recurring===true)
+        ? 'Delete this + ALL future copies (stops recurring)'
+        : 'Delete this + all copies this week';
+    } else {
+      delAllBtn.style.display = 'none';
+    }
   }
 
   // Position popover — ensure it fits in viewport
@@ -4291,11 +4299,11 @@ function ttDetailEdit(){
 function ttDetailDelete(){
   const id = ttDetailTaskId;
   if(!id) return;
-  const t = ttTasks.find(x=>x.id===id);
+  const t = ttTasks.find(x=>parseInt(x.id)===parseInt(id));
   if(!t) return;
   if(!confirm('Delete just this one task?')) return;
   closeTTDetail();
-  ttTasks = ttTasks.filter(x=>x.id!==id);
+  ttTasks = ttTasks.filter(x=>parseInt(x.id)!==parseInt(id));
   saveTTTasks();
   renderTimetable();
   toast('Task deleted');
@@ -4304,9 +4312,9 @@ function ttDetailDelete(){
 function ttDetailDeleteAll(){
   const id = ttDetailTaskId;
   if(!id) return;
-  const t = ttTasks.find(x=>x.id===id);
+  const t = ttTasks.find(x=>parseInt(x.id)===parseInt(id));
   if(!t) return;
-  const isForever = t.recurring==='forever';
+  const isForever = t.recurring==='forever' || t.recurring===true;
   const label = isForever
     ? 'Delete this task AND all future repeating copies? (This will stop it from recurring)'
     : 'Delete this task AND all its copies this week?';
@@ -4519,7 +4527,7 @@ function renderTimetable(){
         const bgClass = t.is_background ? ' bg-task' : '';
         const recurringBadge = t.recurring ? `<span title="Recurring every week" style="font-size:.58rem;margin-left:3px;opacity:.7">🔁</span>` : '';
 
-        const editAttr = `onclick="openTTDetail(${t.id},event)"`;
+        const editAttr = `onclick="openTTDetail(${t.id},event);event.stopPropagation()"`;
         const dragAttrs = canAddEdit ? `draggable="true" ondragstart="ttDragStart(event,${t.id})" ondragend="this.style.opacity='1'"` : '';
 
         return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}${bgClass}"${methodAttr} ${editAttr} ${dragAttrs} style="position:relative">${typeShort} ${projIds.length?'':t.desc||''}${recurringBadge||''}${statBadge}${projTags}</span>`;
@@ -4955,7 +4963,7 @@ function ttExecuteCopyDay(){
 function delTTTask(){
   const id=parseInt(document.getElementById('ttEditId').value);
   if(!id||!confirm('Delete this task?'))return;
-  ttTasks=ttTasks.filter(t=>t.id!==id);
+  ttTasks=ttTasks.filter(t=>parseInt(t.id)!==id);
   saveTTTasks();
   cm('ttMov');
   renderTimetable();
