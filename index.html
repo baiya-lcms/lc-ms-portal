@@ -1977,7 +1977,12 @@ async function initDashboard(){
     const tlSnap = await fbDB.ref('lcms/timelines').get();
     if(tlSnap.exists()){ D.timelines = tlSnap.val(); console.log('Timelines loaded from Firebase'); }
     const ttSnap = await fbDB.ref('lcms/timetable').get();
-    if(ttSnap.exists()){ ttTasks = fbArr(ttSnap.val()).map(normTTask||((t)=>t)); console.log('Timetable loaded:', ttTasks.length, 'tasks'); }
+    if(ttSnap.exists()){
+      ttTasks = fbArr(ttSnap.val()).map(normTTask||((t)=>t));
+      console.log('Timetable loaded:', ttTasks.length, 'tasks');
+      // If Project Progress tab is open, refresh it now that ttTasks has arrived
+      if(document.getElementById('v-projstatus')?.style.display !== 'none') renderProjStatus();
+    }
     else { console.warn('No timetable data in Firebase'); ttTasks = loadTTTasks(); }
     const wbSnap = await fbDB.ref('lcms/wbcards').get();
     if(wbSnap.exists()){
@@ -1992,6 +1997,18 @@ async function initDashboard(){
   const _rqs=localStorage.getItem('lcms_rtqueue'); if(_rqs) rtQueueStore=JSON.parse(_rqs);
   // Start real-time listener so queue is shared across all team devices
   rtStartSharedListener();
+  // Live timetable listener — updates Project Progress whenever any team member saves tasks
+  fbDB.ref('lcms/timetable').on('value', snap=>{
+    if(!snap.exists()) return;
+    const val = snap.val();
+    const arr = fbArr(val).map(normTTask||(t=>t));
+    // Only update if data actually changed (avoid infinite loops)
+    if(JSON.stringify(arr) === JSON.stringify(ttTasks)) return;
+    ttTasks = arr;
+    localStorage.setItem('lcms_timetable', JSON.stringify(ttTasks));
+    renderTimetable();
+    if(document.getElementById('v-projstatus')?.style.display !== 'none') renderProjStatus();
+  });
   // Load planning data
   loadPlanData();
   try{
@@ -2042,6 +2059,8 @@ window.addEventListener('DOMContentLoaded', async ()=>{
 function renderAll(){
   renderDash(); renderFinancial(); renderClients(); renderProjTable(); renderStatusGroups();
   renderFollowup(); renderInquiryNew();
+  // Re-render Project Progress if that tab is currently visible
+  if(document.getElementById('v-projstatus')?.style.display !== 'none') renderProjStatus();
   document.getElementById('cliB').textContent = D.clients.length;
   document.getElementById('projB').textContent = D.projects.length;
   const UNPAID_STATUSES=['Discussing','รอชำระ งวด 2/2','Payment completed 1/2','Payment completed  งวด1/2','หนี้สูญ / ลูกค้าไม่ชำระเงิน'];
