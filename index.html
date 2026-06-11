@@ -779,6 +779,20 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
   <button onclick="closePsPopover()" style="width:100%;margin-top:8px;padding:5px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;font-size:.72rem;color:#64748b">Close</button>
 </div>
 
+<!-- PROJECT SUMMARY MODAL -->
+<div class="ov" id="psSumMov">
+  <div class="modal" style="max-width:560px">
+    <div class="mhdr" style="background:#1F4E79;color:#fff;border-radius:14px 14px 0 0">
+      <h3 style="color:#fff" id="psSumTitle">Project Summary</h3>
+      <button class="mclose" style="color:#fff" onclick="cm('psSumMov')">×</button>
+    </div>
+    <div class="mbody" id="psSumBody" style="padding:0"></div>
+    <div class="mfoot">
+      <button class="btn" style="background:#f1f5f9;color:#475569" onclick="cm('psSumMov')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- COPY DAY MODAL -->
 <div class="ov" id="copyDayMov">
   <div class="modal" style="max-width:420px">
@@ -3952,8 +3966,8 @@ function renderPsCard(p){
 
   return `<div class="ps-card" id="ps-proj-${p.id}">
     <div class="ps-card-hdr">
-      <span class="ps-proj-no">P${p.project_no}</span>
-      <span style="font-weight:600;font-size:.82rem;color:#1e293b">${p.customer||'—'}</span>
+      <span class="ps-proj-no" onclick="openPsSummary(${p.id})" style="cursor:pointer" title="View project summary">P${p.project_no}</span>
+      <span style="font-weight:600;font-size:.82rem;color:#1e293b;cursor:pointer" onclick="openPsSummary(${p.id})" title="View project summary">${p.customer||'—'}</span>
       <span class="ps-method-badge" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${p.method||'—'}</span>
       <span style="font-size:.72rem;color:#64748b">${p.num_samples||0} samples</span>
       ${statusBadge}
@@ -4017,13 +4031,15 @@ function openPsPopover(projId, stepId, event){
 
   const pop = document.getElementById('psPopover');
   pop.style.display = 'block';
+  pop.style.maxHeight = (window.innerHeight - 20) + 'px';
+  pop.style.overflowY = 'auto';
   const stepEl = event.target.closest('.ps-step') || event.target;
   const rect = stepEl.getBoundingClientRect();
-  const popH = 300, popW = 230;
-  const top  = (rect.bottom + 8 + popH > window.innerHeight) ? rect.top - popH - 4 : rect.bottom + 6;
-  const left = Math.min(rect.left, window.innerWidth - popW - 10);
-  pop.style.top  = Math.max(8, top)  + 'px';
-  pop.style.left = Math.max(8, left) + 'px';
+  const popH = pop.offsetHeight, popW = Math.max(pop.offsetWidth, 240);
+  const top  = (rect.bottom + 8 + popH > window.innerHeight) ? Math.max(8, rect.top - popH - 4) : rect.bottom + 6;
+  const left = Math.max(8, Math.min(rect.left, window.innerWidth - popW - 10));
+  pop.style.top  = top  + 'px';
+  pop.style.left = left + 'px';
 
   // Populate date fields
   const stepData = tl.steps[stepId]||{};
@@ -4032,6 +4048,58 @@ function openPsPopover(projId, stepId, event){
 
   // Close on outside click
   setTimeout(()=>document.addEventListener('click', closePsPopoverOutside, {once:true}), 50);
+}
+
+function openPsSummary(projId){
+  const p = (D.projects||[]).find(x=>x.id===projId);
+  if(!p) return;
+  const tl = getTimeline(projId);
+  document.getElementById('psSumTitle').textContent = `P${p.project_no} — ${p.customer||''}`;
+  const mc = getMethodColors(p.method);
+
+  const rows = PS_STEPS.map(s=>{
+    const st = tl.steps[s.id]||{};
+    const status = st.status||'pending';
+    const assignees = st.assignees||[];
+    const statusLabel = status==='done' ? '<span style="background:#dcfce7;color:#166534;padding:2px 9px;border-radius:10px;font-size:.72rem;font-weight:700">✓ Done</span>'
+                      : status==='current' ? '<span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:10px;font-size:.72rem;font-weight:700">▶ In Progress</span>'
+                      : '<span style="background:#f1f5f9;color:#94a3b8;padding:2px 9px;border-radius:10px;font-size:.72rem;font-weight:700">○ Pending</span>';
+    const peopleHtml = assignees.length ? assignees.map(name=>{
+      const idx = getUserColorIdx(name);
+      return `<span style="background:${WB_USER_COLORS[idx]};color:${WB_USER_TEXT[idx]};padding:2px 9px;border-radius:10px;font-size:.72rem;font-weight:700;display:inline-block">${name}</span>`;
+    }).join(' ') : '<span style="color:#94a3b8;font-size:.75rem">—</span>';
+    const dateHtml = (st.start_date||st.end_date)
+      ? `<div style="font-size:.75rem;color:#475569;margin-top:4px">
+          ${st.start_date?`Start: <strong>${st.start_date}</strong>`:''}
+          ${st.start_date&&st.end_date?' · ':''}
+          ${st.end_date?`End: <strong>${st.end_date}</strong>`:''}
+         </div>` : '';
+    return `<div style="display:flex;align-items:flex-start;gap:14px;padding:12px 20px;border-bottom:1px solid #f1f5f9">
+      <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.8rem;margin-top:2px;
+        background:${status==='done'?'#dcfce7':status==='current'?'#dbeafe':'#f1f5f9'};
+        color:${status==='done'?'#166534':status==='current'?'#1e40af':'#94a3b8'};
+        border:2px solid ${status==='done'?'#86efac':status==='current'?'#93c5fd':'#e2e8f0'}">
+        ${status==='done'?'✓':status==='current'?'▶':s.emoji}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:.88rem;color:#1e293b">${s.label}</span>
+          ${statusLabel}
+        </div>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:5px">${peopleHtml}</div>
+        ${dateHtml}
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('psSumBody').innerHTML = `
+    <div style="padding:14px 20px;border-bottom:1px solid #e2e8f0;background:#f8fafc;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <span style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border};padding:3px 10px;border-radius:10px;font-size:.75rem;font-weight:700">${p.method||'—'}</span>
+      <span style="font-size:.8rem;color:#64748b">${p.num_samples||0} samples</span>
+      <span style="font-size:.8rem;color:#64748b">${p.work_status||''}</span>
+    </div>
+    ${rows}`;
+  document.getElementById('psSumMov').classList.add('open');
 }
 
 function psSetStepDate(field, value){
