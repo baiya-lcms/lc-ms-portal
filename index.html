@@ -3892,12 +3892,8 @@ function renderProjStatus(){
   if(Array.isArray(ttTasks)) ttTasks.forEach(normTTask);
   if(!psWeekStart) psWeekStart = ttWeekStart || weekMonday(new Date());
 
-  const wl = document.getElementById('psWeekLabel');
-  if(wl){
-    const fmt = d=>d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-    const wEnd = new Date(psWeekStart); wEnd.setDate(wEnd.getDate()+6);
-    wl.textContent = `Week of ${fmt(psWeekStart)} – ${fmt(wEnd)}`;
-  }
+  const filter = (document.getElementById('psFilter')||{value:'week'}).value;
+  let projects = [];
 
   // Build user palette
   const palette = document.getElementById('psUserPalette');
@@ -3909,20 +3905,23 @@ function renderProjStatus(){
     }).join('');
   }
 
-  const filter = (document.getElementById('psFilter')||{value:'week'}).value;
-  let projects = [];
-
   if(filter === 'week'){
-    // Projects with timetable tasks this week
     const wEnd = new Date(psWeekStart); wEnd.setDate(wEnd.getDate()+6);
+    const startStr = isoDate(psWeekStart);
+    const endStr   = isoDate(wEnd);
+    const wl = document.getElementById('psWeekLabel');
+    if(wl){
+      const fmt = d=>d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+      wl.textContent = `Week of ${fmt(psWeekStart)} – ${fmt(wEnd)}`;
+    }
     const weekProjIds = new Set(
-      (ttTasks||[]).filter(t=>{
-        const d = new Date(t.date+'T00:00:00');
-        return d >= psWeekStart && d <= wEnd;
-      }).flatMap(t=>(Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number))
+      (ttTasks||[]).filter(t=> t.date >= startStr && t.date <= endStr)
+                   .flatMap(t=>(Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number))
     );
     projects = [...weekProjIds].map(id=>(D.projects||[]).find(p=>Number(p.id)===id)).filter(Boolean);
   } else {
+    const wl = document.getElementById('psWeekLabel');
+    if(wl) wl.textContent = 'All active projects (2026)';
     projects = (D.projects||[]).filter(p=>!['Project completed','Cancel'].includes(p.work_status) && String(p.year)==='2026');
   }
 
