@@ -278,7 +278,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .tt-chip.other{border-left-color:#94a3b8}
 /* Method overlay colors — use *=  (contains) so variants like "Quantification - Metabolite" match */
 /* These come AFTER task-type rules so same specificity = last wins */
-.tt-chip[data-method*="Proteomics"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
+.tt-chip[data-method*="Proteomics"]{background:#fce7f3!important;color:#9d174d!important;border-left-color:#db2777!important}
 .tt-chip[data-method*="Peptidomics"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
 .tt-chip[data-method*="Peptide"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
 .tt-chip[data-method*="Protein"]{background:#ede9fe!important;color:#5b21b6!important;border-left-color:#7c3aed!important}
@@ -292,21 +292,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .tt-table tr.tt-tq-row td.tt-day{background:#fffbeb}
 .tt-table tr.tt-tq-row td.tt-day:hover{background:#fde68a55}
 /* Background/long-term tasks */
-.tt-chip.bg-task{
-  opacity:.55;font-style:italic;
-  background:#f1f5f9!important;
-  color:#94a3b8!important;
-  border:1.5px dashed #cbd5e1!important;
-  border-left:3px dashed #94a3b8!important;
-  box-shadow:none!important;
-  border-radius:10px!important;
-  filter:grayscale(.6);
-}
-.tt-chip.bg-task .tt-proj-tag{
-  background:#94a3b8!important;
-  color:#fff!important;
-  opacity:.75;
-}
+.tt-chip.bg-task{opacity:.38;font-style:italic;border-style:dashed;background:#f1f5f9!important;color:#64748b!important;border-color:#cbd5e1!important}
 /* Multi-day continuation */
 .tt-chip.continues{border-right:none;border-radius:6px 0 0 6px;margin-right:-2px}
 .tt-chip.continuation{border-left:none;border-radius:0 6px 6px 0;opacity:.85;font-style:italic}
@@ -353,8 +339,30 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 /* Faded done steps */
 .ps-step.done{opacity:.55}
 .ps-step.done:hover{opacity:.8}
+/* ── Long-Term Planning Gantt ───────────────────────────────── */
+.plan-scroll{overflow-x:auto;padding-bottom:10px}
+.plan-table{border-collapse:collapse;min-width:max-content;width:100%}
+.plan-table th,.plan-table td{border:1px solid #e2e8f0}
+.plan-month-hdr{background:#1F4E79;color:#fff;text-align:center;padding:7px 8px;font-size:.72rem;font-weight:700;cursor:pointer;user-select:none;letter-spacing:.03em}
+.plan-month-hdr:hover{background:#2E75B6}
+.plan-week-hdr{background:#f0f6ff;color:#1F4E79;text-align:center;padding:4px 6px;font-size:.68rem;font-weight:700;min-width:56px;max-width:56px}
+.plan-label-hdr{background:#1F4E79;color:#fff;padding:7px 14px;font-size:.72rem;font-weight:700;min-width:220px;position:sticky;left:0;z-index:10}
+.plan-row-label{background:#fff;padding:7px 10px;font-size:.78rem;min-width:220px;max-width:220px;position:sticky;left:0;z-index:5;border-right:2px solid #dde8f0}
+.plan-cell{min-width:56px;max-width:56px;height:38px;padding:2px;background:#fff;position:relative}
+.plan-bar{position:absolute;top:7px;bottom:7px;pointer-events:none;min-width:4px}
+.plan-bar.b-start{border-radius:8px 0 0 8px;left:4px;right:0}
+.plan-bar.b-end{border-radius:0 8px 8px 0;left:0;right:4px}
+.plan-bar.b-solo{border-radius:8px;left:4px;right:4px}
+.plan-bar.b-mid{left:0;right:0}
+.plan-proj-no{font-weight:700;color:#1F4E79;font-size:.8rem}
+.plan-proj-cust{font-size:.7rem;color:#64748b;display:block;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
+.plan-method-tag{font-size:.62rem;padding:1px 6px;border-radius:8px;display:inline-block;margin-top:2px;font-weight:600}
+.plan-del-btn{font-size:.75rem;color:#94a3b8;background:none;border:none;cursor:pointer;padding:0 3px;float:right;line-height:1.2}
+.plan-del-btn:hover{color:#ef4444}
+.plan-collapsed-week{display:none}
+.plan-collapsed-month{min-width:20px;max-width:20px;background:#f0f6ff}
+body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
 </style>
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -370,8 +378,8 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
     messagingSenderId: "772486792853",
     appId: "1:772486792853:web:da18c5057fca697e9a3d9c"
   });
-  var fbDB   = firebase.database();
-  var fbAuth = firebase.auth();
+  const fbDB   = firebase.database();
+  const fbAuth = firebase.auth();
 </script>
 </head>
 <body>
@@ -390,9 +398,6 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
       onkeydown="if(event.key==='Enter')doLogin()">
     <button class="lbtn" onclick="doLogin()">Sign In →</button>
     <div class="lerr" id="loginErr"></div>
-    <div style="margin-top:14px;font-size:.68rem;color:#94a3b8;text-align:center">
-      Default account: <strong>admin</strong>
-    </div>
   </div>
 </div>
 
@@ -425,6 +430,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
   <div class="tab" id="tabFollowup" onclick="sw('followup',this)">🔔 Follow-Up <span class="bdg bdg-o" id="fuB">0</span></div>
   <div class="tab" id="tabUsers" onclick="sw('users',this)">👤 Users</div>
   <div class="tab" id="tabTimetable" onclick="sw('timetable',this);renderTimetable()">📅 Timetable</div>
+  <div class="tab" id="tabPlanning" onclick="sw('planning',this);renderPlanning()">📆 Planning</div>
   <div class="tab" id="tabProjStatus" onclick="sw('projstatus',this);renderProjStatus()">🔬 Project Progress</div>
 </div>
 
@@ -608,23 +614,6 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 
 <!-- ═══════════ WORK STATUS ═══════════ -->
 <div id="v-status" class="view active">
-
-  <!-- ── PROJECTS ON HOLD BOARD ── -->
-  <div id="holdBoard" style="background:#fff;border:2px solid #f59e0b;border-radius:14px;margin-bottom:18px;box-shadow:0 2px 8px rgba(245,158,11,.12)">
-    <div style="background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:12px 12px 0 0;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-      <span style="font-weight:700;color:#fff;font-size:.88rem">⏸ Projects on Hold</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input id="holdInput" type="text" placeholder="Type project no. (e.g. 406) + Enter"
-          style="padding:5px 10px;border:none;border-radius:7px;font-size:.78rem;width:220px;outline:none"
-          onkeydown="if(event.key==='Enter')holdAdd()">
-        <button onclick="holdAdd()" style="padding:5px 12px;background:#fff;color:#92400e;border:none;border-radius:7px;font-weight:700;font-size:.78rem;cursor:pointer">+ Add</button>
-      </div>
-    </div>
-    <div id="holdItems" style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px;min-height:44px;align-items:center">
-      <span id="holdEmpty" style="color:#d97706;font-size:.78rem;font-style:italic">No projects on hold — add project numbers above</span>
-    </div>
-  </div>
-
   <div class="ypills" id="stYearPills"></div>
   <div id="stGrps"></div>
 </div>
@@ -767,7 +756,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 </div>
 
 <!-- Project step assign popover -->
-<div id="psPopover" style="display:none;position:fixed;z-index:500;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:12px 14px;min-width:200px">
+<div id="psPopover" style="display:none;position:fixed;z-index:500;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:12px 14px;min-width:220px">
   <div style="font-size:.75rem;font-weight:700;color:#1F4E79;margin-bottom:8px" id="psPopTitle">Assign to step</div>
   <div id="psPopUsers" style="display:flex;flex-direction:column;gap:5px"></div>
   <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e2e8f0">
@@ -778,7 +767,49 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
       <button onclick="psSetStepStatus('pending')" style="flex:1;padding:5px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;font-size:.72rem;font-weight:600">○ Pending</button>
     </div>
   </div>
+  <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e2e8f0">
+    <div style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">Step dates:</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center">
+      <label style="font-size:.68rem;color:#64748b">Start</label>
+      <input type="date" id="psPopStartDate" style="padding:3px 6px;border:1px solid #e2e8f0;border-radius:6px;font-size:.72rem;color:#1e293b" onchange="psSetStepDate('start_date',this.value)">
+      <label style="font-size:.68rem;color:#64748b">End</label>
+      <input type="date" id="psPopEndDate"   style="padding:3px 6px;border:1px solid #e2e8f0;border-radius:6px;font-size:.72rem;color:#1e293b" onchange="psSetStepDate('end_date',this.value)">
+    </div>
+  </div>
   <button onclick="closePsPopover()" style="width:100%;margin-top:8px;padding:5px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;font-size:.72rem;color:#64748b">Close</button>
+</div>
+
+<!-- COPY DAY MODAL -->
+<div class="ov" id="copyDayMov">
+  <div class="modal" style="max-width:420px">
+    <div class="mhdr" style="background:#166534;color:#fff;border-radius:14px 14px 0 0">
+      <h3 style="color:#fff">Copy All Tasks to Another Day</h3>
+      <button class="mclose" style="color:#fff" onclick="cm('copyDayMov')">×</button>
+    </div>
+    <div class="mbody">
+      <div class="fg">
+        <div class="fgrp">
+          <label>Copy FROM day</label>
+          <select id="copyDayFrom" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem"></select>
+        </div>
+        <div class="fgrp">
+          <label>Copy TO day</label>
+          <input type="date" id="copyDayTo" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+        </div>
+        <div class="fgrp">
+          <label>Copy tasks for</label>
+          <select id="copyDayPerson" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+            <option value="">All people</option>
+          </select>
+        </div>
+        <div id="copyDayPreview" style="font-size:.8rem;color:#475569;padding:8px;background:#f8fafc;border-radius:8px;display:none"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" style="background:#f1f5f9;color:#475569" onclick="cm('copyDayMov')">Cancel</button>
+      <button class="btn" style="background:#166534;color:#fff" onclick="execCopyDay()">📋 Copy Tasks</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════ TIMETABLE ═══════════ -->
@@ -792,7 +823,6 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
   <div style="padding:8px 14px;border-top:1px solid #f1f5f9;display:flex;gap:6px" id="ttDetailFooter">
     <button id="ttDetailEditBtn" onclick="ttDetailEdit()" style="flex:1;padding:6px;background:#1F4E79;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600">✏️ Edit</button>
     <button id="ttDetailDelBtn" onclick="ttDetailDelete()" style="padding:6px 10px;background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600">🗑</button>
-    <button id="ttDetailDelAllBtn" onclick="ttDetailDeleteAll()" title="Delete this task + all its copies this week" style="display:none;padding:6px 10px;background:#7f1d1d;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600">🗑 All</button>
   </div>
 </div>
 <div class="view" id="v-timetable">
@@ -804,6 +834,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
     <span id="ttWeekLabel" style="font-weight:700;color:#1F4E79;font-size:.9rem"></span>
     <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
       <button onclick="toggleRtCalc()" class="btn bsm" style="background:#C55A11;color:#fff">⏱ Run Calculator</button>
+      <button onclick="openCopyDayModal()" class="btn bsm edit-btn" style="background:#166534;color:#fff">📋 Copy Day</button>
       <button id="ttMyBtn" class="btn bsm" style="background:#f1f5f9;color:#475569" onclick="ttToggleMyTasks()">👤 My Tasks</button>
       <select id="ttViewPerson" onchange="renderTimetable()" style="padding:5px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.78rem">
         <option value="">All People</option>
@@ -821,7 +852,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
     <span style="font-size:.72rem;font-weight:700;color:#475569;margin-right:4px">Method:</span>
     <span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #3b82f6">Metabolomics</span>
     <span style="background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #10b981">Lipidomics</span>
-    <span style="background:#ede9fe;color:#5b21b6;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #7c3aed">Proteomics</span>
+    <span style="background:#fce7f3;color:#9d174d;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #db2777">Proteomics</span>
     <span style="background:#fef9c3;color:#854d0e;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #f59e0b">Quantification</span>
     <span style="width:1px;height:16px;background:#cbd5e1;display:inline-block;margin:0 4px"></span>
     <span style="display:inline-flex;align-items:center;gap:5px;font-size:.68rem;color:#dc2626;font-weight:700"><span style="width:9px;height:9px;border-radius:50%;background:#dc2626;display:inline-block"></span>Statistical analysis required</span>
@@ -847,8 +878,19 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
           </select>
         </div>
         <div style="flex:1">
-          <label style="font-size:.7rem;font-weight:600;color:#475569;display:block;margin-bottom:3px">Start Time</label>
-          <input type="time" id="rtStart" value="08:00" style="width:100%;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.8rem;font-weight:600;color:#1F4E79" oninput="rtCalcUpdate()" onchange="rtCalcUpdate()">
+          <label style="font-size:.7rem;font-weight:600;color:#475569;display:block;margin-bottom:3px">Start Day &amp; Time</label>
+          <div style="display:flex;gap:5px">
+            <select id="rtStartDay" style="flex:1;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.78rem;font-weight:600;color:#1F4E79" onchange="rtCalcUpdate()">
+              <option value="0">Monday</option>
+              <option value="1">Tuesday</option>
+              <option value="2">Wednesday</option>
+              <option value="3">Thursday</option>
+              <option value="4">Friday</option>
+              <option value="5">Saturday</option>
+              <option value="6">Sunday</option>
+            </select>
+            <input type="time" id="rtStart" value="08:00" style="width:90px;padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:.8rem;font-weight:600;color:#1F4E79" oninput="rtCalcUpdate()" onchange="rtCalcUpdate()">
+          </div>
         </div>
       </div>
       <label style="font-size:.7rem;font-weight:600;color:#475569;display:block;margin-bottom:3px">Add Project to Queue</label>
@@ -873,12 +915,12 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 </div>
 
 <div class="ov" id="ttMov">
-  <div class="modal" style="max-width:600px;display:flex;flex-direction:column;max-height:90vh">
+  <div class="modal" style="max-width:600px">
     <div class="mhdr">
       <h3 id="ttMTitle">Add Timetable Task</h3>
       <button class="mclose" onclick="cm('ttMov')">×</button>
     </div>
-    <div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto;flex:1;min-height:0">
+    <div style="padding:18px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="grid-column:1/-1">
         <label style="font-size:.75rem;font-weight:600;color:#475569;display:block;margin-bottom:4px">Person / Instrument</label>
         <select id="ttPerson" style="width:100%;padding:8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem"></select>
@@ -914,7 +956,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
     <span style="width:1px;height:16px;background:#e2e8f0;display:inline-block"></span>
     <span style="background:#dbeafe;color:#1e40af;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #3b82f6">Metabolomics</span>
     <span style="background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #10b981">Lipidomics</span>
-    <span style="background:#ede9fe;color:#5b21b6;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #7c3aed">Proteomics</span>
+    <span style="background:#fce7f3;color:#9d174d;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #db2777">Proteomics</span>
     <span style="background:#fef9c3;color:#854d0e;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:600;border-left:3px solid #f59e0b">Quantification</span>
     <span style="width:1px;height:16px;background:#e2e8f0;display:inline-block"></span>
     <span style="background:#dc2626;color:#fff;padding:2px 9px;border-radius:8px;font-size:.68rem;font-weight:700">STAT = urgent</span>
@@ -957,20 +999,9 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
           <span style="color:#dc2626">🔴 Statistical analysis required</span>
         </label>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.8rem;font-weight:600">
-          <input type="checkbox" id="ttIsBackground" style="width:16px;height:16px;accent-color:#94a3b8" onchange="document.getElementById('ttRecurringWrap').style.display=this.checked?'flex':'none'">
-          <span style="color:#64748b">🔁 Background / recurring task</span>
+          <input type="checkbox" id="ttIsBackground" style="width:16px;height:16px;accent-color:#94a3b8">
+          <span style="color:#64748b">Background / long-term task</span>
         </label>
-        <span id="ttRecurringWrap" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font-size:.76rem;color:#475569;font-weight:600">Repeat:</span>
-          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.76rem;color:#475569">
-            <input type="radio" name="ttRecurScope" id="ttRecurWeek" value="week" style="accent-color:#475569" checked>
-            <span>This week only</span>
-          </label>
-          <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:.76rem;color:#475569">
-            <input type="radio" name="ttRecurScope" id="ttRecurForever" value="forever" style="accent-color:#475569">
-            <span>Every week (forever)</span>
-          </label>
-        </span>
       </div>
       <!-- Run time calculator -->
       <div style="grid-column:1/-1" id="tt_runtime_box" style="display:none">
@@ -981,7 +1012,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
       </div>
       <input type="hidden" id="ttEditId">
     </div>
-    <div class="mfoot" style="padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-shrink:0">
+    <div class="mfoot" style="padding:14px 20px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;gap:8px;align-items:center">
       <button class="btn bdel" id="ttDelBtn" onclick="delTTTask()" style="display:none">🗑 Delete</button>
       <div style="display:flex;gap:8px">
         <button class="btn" style="background:#f1f5f9;color:#475569" onclick="cm('ttMov')">Cancel</button>
@@ -992,25 +1023,6 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 </div>
 
 </div><!-- /main -->
-
-<!-- COPY DAY MODAL -->
-<div class="ov" id="ttCopyDayOv">
-  <div class="modal" style="max-width:420px">
-    <div class="mhdr">
-      <h3 id="ttCopyDayTitle">📋 Copy Tasks</h3>
-      <button class="mclose" onclick="cm('ttCopyDayOv')">×</button>
-    </div>
-    <div style="padding:18px 20px">
-      <div style="font-size:.78rem;color:#475569;margin-bottom:4px">Copy all tasks from <strong id="ttCopyDayFrom"></strong> to:</div>
-      <div style="font-size:.7rem;color:#94a3b8;margin-bottom:12px">Existing tasks on destination days are kept — duplicates (same person, project, type) are skipped.</div>
-      <div id="ttCopyDayTargets" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px"></div>
-      <div style="display:flex;gap:8px;margin-top:4px">
-        <button class="btn" style="flex:1;background:#f1f5f9;color:#475569" onclick="cm('ttCopyDayOv')">Cancel</button>
-        <button class="btn" style="flex:1;background:#1F4E79;color:#fff" onclick="ttExecuteCopyDay()">📋 Copy Tasks</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- CLIENT PROFILE PANEL (slide-in) -->
 <div class="cp-overlay" id="cpOv" onclick="if(event.target===this)closeCPPanel()">
@@ -1240,6 +1252,76 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 </div>
 
 
+<!-- ═══════════ PLANNING ═══════════ -->
+<div class="view" id="v-planning">
+  <div class="card" style="margin-bottom:20px">
+    <div class="chdr" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h3>⚗️ TQ — Long-Term Planning</h3>
+      <button class="btn bg bsm add-btn" onclick="openPlanModal('tq')">+ Add Project</button>
+    </div>
+    <div class="plan-scroll"><div id="plan-tq"></div></div>
+  </div>
+  <div class="card">
+    <div class="chdr" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h3>🔬 QTOF — Long-Term Planning</h3>
+      <button class="btn bg bsm add-btn" onclick="openPlanModal('qtof')">+ Add Project</button>
+    </div>
+    <div class="plan-scroll"><div id="plan-qtof"></div></div>
+  </div>
+</div>
+
+<!-- PLANNING MODAL -->
+<div class="ov" id="planMov">
+  <div class="modal" style="max-width:500px">
+    <div class="mhdr" style="background:#1F4E79;color:#fff;border-radius:14px 14px 0 0">
+      <h3 style="color:#fff" id="planMTitle">Add Project to Planning</h3>
+      <button class="mclose" style="color:#fff" onclick="cm('planMov')">×</button>
+    </div>
+    <div class="mbody">
+      <input type="hidden" id="plan_instrument">
+      <input type="hidden" id="plan_edit_id">
+      <div class="fg">
+        <div class="fgrp full">
+          <label>Project</label>
+          <input id="plan_search" placeholder="Type project no. or client name to search…" oninput="planSearchProjects()" autocomplete="off"
+            style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+          <div id="plan_results" style="max-height:180px;overflow-y:auto;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;display:none;background:#fff;margin-top:-2px"></div>
+          <div id="plan_selected" style="margin-top:6px;display:none;background:#f0f6ff;border-radius:8px;padding:8px 12px;font-size:.82rem;color:#1F4E79;font-weight:600"></div>
+          <input type="hidden" id="plan_proj_id">
+        </div>
+        <div class="fgrp">
+          <label>Start</label>
+          <div style="display:flex;gap:6px">
+            <select id="plan_start_month" style="flex:1;padding:7px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem"></select>
+            <select id="plan_start_week" style="width:70px;padding:7px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem">
+              <option value="1">W1</option><option value="2">W2</option>
+              <option value="3">W3</option><option value="4">W4</option>
+            </select>
+          </div>
+        </div>
+        <div class="fgrp">
+          <label>End</label>
+          <div style="display:flex;gap:6px">
+            <select id="plan_end_month" style="flex:1;padding:7px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem"></select>
+            <select id="plan_end_week" style="width:70px;padding:7px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem">
+              <option value="1">W1</option><option value="2">W2</option>
+              <option value="3">W3</option><option value="4" selected>W4</option>
+            </select>
+          </div>
+        </div>
+        <div class="fgrp full">
+          <label>Notes (optional)</label>
+          <input id="plan_notes" placeholder="e.g. neg mode only, 2 batches…" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" style="background:#f1f5f9;color:#475569" onclick="cm('planMov')">Cancel</button>
+      <button class="btn" style="background:#1F4E79;color:#fff" onclick="savePlanRow()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── USERS VIEW ── -->
 <div class="view" id="v-users">
   <div class="card">
@@ -1339,7 +1421,7 @@ const REV_GOAL = 20000000;
 
 // ── AUTH SYSTEM ──────────────────────────────────────────────────────────
 const DEFAULT_USERS = [
-  {id:1,  username:'admin',   password:'chromatography',   name:'Administrator', role:'admin',    timetable_id:''},
+  {id:1,  username:'admin',   password:'chromatography', name:'Administrator', role:'admin',    timetable_id:''},
   {id:2,  username:'bib',     password:'bib123',     name:'Bib',           role:'manager',  timetable_id:''},
   {id:3,  username:'finance', password:'fin123',     name:'Finance Team',  role:'fin',      timetable_id:''},
   {id:4,  username:'maprang', password:'maprang123', name:'Maprang',        role:'ops',      timetable_id:'Maprang'},
@@ -1351,6 +1433,8 @@ const DEFAULT_USERS = [
   {id:10, username:'samuel',  password:'samuel123',  name:'Samuel',        role:'intern',   timetable_id:'Samuel'},
   {id:11, username:'kieron',  password:'kieron123',  name:'Kieron',        role:'intern',   timetable_id:'Kieron'},
   {id:12, username:'james',   password:'james123',   name:'James',         role:'intern',   timetable_id:'James'},
+  {id:13, username:'nhat',    password:'nhat123',    name:'Nhat',          role:'intern',   timetable_id:'Nhat'},
+  {id:14, username:'win',     password:'win123',     name:'Win',           role:'intern',   timetable_id:'Win'},
 ];
 let currentUser = null;
 
@@ -1416,7 +1500,8 @@ function doLogin(){
   const p=document.getElementById('luPass').value;
   const err=document.getElementById('loginErr');
   if(!u||!p){err.textContent='Please enter username and password';return;}
-
+  
+  // Fetch latest users from Firebase first, then check credentials
   const attemptLogin = (users) => {
     const found=users.find(x=>x.username===u&&x.password===p);
     if(found){
@@ -1424,38 +1509,30 @@ function doLogin(){
       sessionStorage.setItem('lcms_session',JSON.stringify(found));
       document.getElementById('loginOv').style.display='none';
       applyRole(found.role);
-      // initDashboard immediately — don't wait for Firebase Auth
-      initDashboard();
-      // Firebase Auth happens silently in background for data sync
       fbSignIn(u, p).then(()=>{
-        console.log('Firebase Auth OK:', fbAuth.currentUser?.email);
-        fbSave('users', loadUsers());
-      }).catch(e=>console.warn('Firebase Auth background error:', e));
+        console.log('Firebase currentUser after login:', fbAuth.currentUser?.email);
+        const allUsers = loadUsers();
+        fbSave('users', allUsers);
+        initDashboard();
+      });
     } else {
       err.textContent='Invalid username or password';
       document.getElementById('luPass').value='';
     }
   };
 
-  // Try Firebase users first (with short timeout), fall back to local
-  const timeout = new Promise((_,rej)=>setTimeout(()=>rej('timeout'),3000));
-  Promise.race([
-    fbDB.ref('lcms/users').once('value'),
-    timeout
-  ])
+  // Try to get fresh users from Firebase
+  fbDB.ref('lcms/users').once('value')
     .then(snap => {
-      if(snap && snap.exists && snap.exists() && snap.val()?.length > 0){
+      if(snap.exists() && snap.val()?.length > 0){
         const fbUsers = snap.val();
-        // Always enforce hardcoded admin password
-        const adminU = fbUsers.find(u=>u.username==='admin');
-        if(adminU) adminU.password = 'chromatography';
         localStorage.setItem('lcms_users', JSON.stringify(fbUsers));
         attemptLogin(fbUsers);
       } else {
         attemptLogin(loadUsers());
       }
     })
-    .catch(() => attemptLogin(loadUsers()));
+    .catch(() => attemptLogin(loadUsers())); // fallback to local if Firebase unreachable
 }
 function doLogout(){
   sessionStorage.removeItem('lcms_session');
@@ -1477,10 +1554,9 @@ async function checkAuth(){
     sessionStorage.setItem('lcms_session',JSON.stringify(fresh));
     document.getElementById('loginOv').style.display='none';
     applyRole(fresh.role);
-    // Firebase Auth in background — don't block dashboard load
-    fbSignIn(fresh.username, fresh.password||saved.password||'')
-      .then(()=>console.log('Firebase Auth OK (checkAuth):', fbAuth.currentUser?.email))
-      .catch(e=>console.warn('Firebase Auth background error:', e));
+    // Wait for Firebase Auth before loading data
+    await fbSignIn(fresh.username, fresh.password||saved.password||'');
+    console.log('Firebase currentUser after checkAuth:', fbAuth.currentUser?.email);
     return true;
   }
   return false;
@@ -1494,7 +1570,7 @@ function applyRole(role){
   pill.textContent={admin:'Admin',manager:'Manager',ops:'Operations',fin:'Finance',intern:'Intern'}[role]||role;
   pill.className='role-pill rp-'+role;
 }
-function canEdit(){ return currentUser&&['admin','manager','ops'].includes(currentUser.role); }
+function canEdit(){ return currentUser&&['admin','manager'].includes(currentUser.role); }
 function isAdmin(){ return currentUser&&currentUser.role==='admin'; }
 
 // ── USER MANAGEMENT ───────────────────────────────────────────────────────
@@ -1570,8 +1646,10 @@ let D = {};
 
 // ── FIREBASE SAVE/LOAD ────────────────────────────────────────────────────
 function fbSave(key, data){
-  // Write directly — Firebase DB rules handle security
-  // Don't gate on fbAuth.currentUser as background auth may not complete for all roles
+  if(!fbAuth.currentUser){ 
+    console.warn('fbSave skipped — not authenticated:', key);
+    return;
+  }
   fbDB.ref('lcms/' + key).set(data)
     .then(()=> console.log('Firebase saved:', key))
     .catch(e => console.error('Firebase save error:', key, e.code, e.message));
@@ -1596,8 +1674,16 @@ function saveD(){
 }
 
 async function loadFromFirebase(){
-  // No auth gate — Firebase DB rules handle security.
-  // All logged-in dashboard users should read/write regardless of Firebase Auth state.
+  // Wait for Firebase Auth state to resolve
+  await new Promise(resolve => {
+    const unsub = fbAuth.onAuthStateChanged(user => { unsub(); resolve(user); });
+  });
+
+  if(!fbAuth.currentUser){
+    console.warn('loadFromFirebase: not authenticated, using local cache');
+    return localFallback();
+  }
+
   try {
     console.log('loadFromFirebase: reading from Firebase...');
     const snap = await fbDB.ref('lcms').get();
@@ -1609,33 +1695,28 @@ async function loadFromFirebase(){
         const localUsers = localStorage.getItem('lcms_users') ? JSON.parse(localStorage.getItem('lcms_users')) : [];
         const merged = [...fb.users];
         localUsers.forEach(lu => { if(!merged.find(u=>u.username===lu.username)) merged.push(lu); });
-        // Always enforce hardcoded admin password regardless of what Firebase has
-        const adminU = merged.find(u=>u.username==='admin');
-        if(adminU) adminU.password = 'chromatography';
         localStorage.setItem('lcms_users', JSON.stringify(merged));
-        // Push corrected list back to Firebase so old password is overwritten
+        // Push merged list back to Firebase so all devices get all users
         fbDB.ref('lcms/users').set(merged).catch(e=>console.warn('users sync failed:', e));
       } else {
         // Firebase has no users yet - push local users up
         const localUsers = localStorage.getItem('lcms_users') ? JSON.parse(localStorage.getItem('lcms_users')) : [];
-        const adminU = localUsers.find(u=>u.username==='admin');
-        if(adminU) adminU.password = 'chromatography';
         if(localUsers.length > 0) fbDB.ref('lcms/users').set(localUsers).catch(e=>console.warn('users push failed:', e));
       }
-      if(fb.projects) localStorage.setItem('lcms_projects', JSON.stringify(fb.projects));
-      if(fb.clients)  localStorage.setItem('lcms_clients',  JSON.stringify(fb.clients));
-      if(fb.fin)      localStorage.setItem('lcms_fin',      JSON.stringify(fb.fin));
-      if(fb.inq2)      localStorage.setItem('lcms_inq2',      JSON.stringify(fb.inq2));
+      const fbArr2 = v => !v ? [] : Array.isArray(v) ? v : Object.values(v);
+      if(fb.projects) localStorage.setItem('lcms_projects', JSON.stringify(fbArr2(fb.projects)));
+      if(fb.clients)  localStorage.setItem('lcms_clients',  JSON.stringify(fbArr2(fb.clients)));
+      if(fb.fin)      localStorage.setItem('lcms_fin',      JSON.stringify(fbArr2(fb.fin)));
+      if(fb.inq2)      localStorage.setItem('lcms_inq2',      JSON.stringify(fbArr2(fb.inq2)));
       if(fb.timelines)  localStorage.setItem('lcms_timelines', JSON.stringify(fb.timelines));
-      if(fb.hold)       localStorage.setItem('lcms_hold', JSON.stringify(fb.hold));
       if(fb.rtqueue)    { localStorage.setItem('lcms_rtqueue', JSON.stringify(fb.rtqueue)); rtQueueStore=fb.rtqueue; }
       return {
-        clients:  fb.clients  || JSON.parse(JSON.stringify(SD_CLIENTS)),
-        projects: fb.projects || JSON.parse(JSON.stringify(SD_PROJECTS)),
+        clients:  fbArr2(fb.clients)  .length ? fbArr2(fb.clients)  : JSON.parse(JSON.stringify(SD_CLIENTS)),
+        projects: fbArr2(fb.projects) .length ? fbArr2(fb.projects) : JSON.parse(JSON.stringify(SD_PROJECTS)),
         inq:      JSON.parse(JSON.stringify(SD_INQ)),
-        fin:      fb.fin      || JSON.parse(JSON.stringify(SD_FIN)),
+        fin:      fbArr2(fb.fin)      .length ? fbArr2(fb.fin)      : JSON.parse(JSON.stringify(SD_FIN)),
         prosp:    [],
-        inq2:     fb.inq2     || [],
+        inq2:     fbArr2(fb.inq2),
         timelines: fb.timelines || (localStorage.getItem('lcms_timelines') ? JSON.parse(localStorage.getItem('lcms_timelines')) : {}),
       };
     }
@@ -1702,13 +1783,17 @@ function handleWorkStatusImport(input){
       const hdr = rows[0];
       const col = name => hdr.indexOf(name);
 
+      // Build a lookup of existing project IDs by project_no so timetable refs stay stable
+      const existingIdMap = {};
+      let maxExistingId = 0;
+      (D.projects||[]).forEach(p => {
+        if(p.project_no) existingIdMap[String(p.project_no).trim()] = p.id;
+        if(p.id > maxExistingId) maxExistingId = p.id;
+      });
+      let nextNewId = maxExistingId + 1;
+
       const projects = [];
       const clientMap = {};
-      // Build map of existing project_no -> id so re-imports keep stable IDs
-      // This ensures timetable task project_ids don't shift when rows are inserted
-      const existingProjMap = {};
-      (D.projects||[]).forEach(p=>{ if(p.project_no) existingProjMap[String(p.project_no)] = p.id; });
-      const maxExistingId = (D.projects||[]).reduce((m,p)=>Math.max(m,p.id||0),0);
       for(let i=2; i<rows.length; i++){
         const r = rows[i];
         const pno = fmt(r[col('Project no.')]);
@@ -1725,8 +1810,11 @@ function handleWorkStatusImport(input){
         if(!clientMap[cust] && cust) clientMap[cust] = {id:Object.keys(clientMap).length+1, name:cust, affiliation:aff, department:'', email:'', phone:'', country:'', notes:'', project_count:0};
         if(cust) clientMap[cust].project_count++;
 
+        // Preserve existing ID if project_no already known — keeps timetable links intact
+        const stableId = existingIdMap[pno] !== undefined ? existingIdMap[pno] : nextNewId++;
+
         projects.push({
-          id: existingProjMap[pno] || (maxExistingId + projects.length + 1), project_no:pno,
+          id: stableId, project_no:pno,
           customer:cust, client_id: clientMap[cust]?.id||0,
           affiliation:aff,
           project_detail: fmt(r[col('Project detail')]),
@@ -1865,23 +1953,44 @@ async function initDashboard(){
   } catch(e){ console.warn('Could not load users from Firebase:', e.message); }
   D = await loadFromFirebase();
   // Also load timetable & board from Firebase
+  // Helper: Firebase stores arrays as objects {0:…,1:…} — always normalize
+  const fbArr = v => {
+    if(!v) return [];
+    if(Array.isArray(v)) return v;
+    return Object.values(v);
+  };
   try {
     const tlSnap = await fbDB.ref('lcms/timelines').get();
     if(tlSnap.exists()){ D.timelines = tlSnap.val(); console.log('Timelines loaded from Firebase'); }
     const ttSnap = await fbDB.ref('lcms/timetable').get();
-    if(ttSnap.exists()){ ttTasks = ttSnap.val(); console.log('Timetable loaded:', ttTasks?.length, 'tasks'); }
+    if(ttSnap.exists()){ ttTasks = fbArr(ttSnap.val()).map(normTTask||((t)=>t)); console.log('Timetable loaded:', ttTasks.length, 'tasks'); }
     else { console.warn('No timetable data in Firebase'); ttTasks = loadTTTasks(); }
     const wbSnap = await fbDB.ref('lcms/wbcards').get();
     if(wbSnap.exists()){
-      wbCards = wbSnap.val();
-      console.log('WB cards loaded:', wbCards?.length, 'cards');
+      wbCards = fbArr(wbSnap.val());
+      console.log('WB cards loaded:', wbCards.length, 'cards');
       const currentWeek = isoDate(weekMonday(new Date()));
       let migrated = false;
-      (wbCards||[]).forEach(c=>{ if(!c.week){ c.week=currentWeek; migrated=true; } });
+      wbCards.forEach(c=>{ if(!c.week){ c.week=currentWeek; migrated=true; } });
       if(migrated){ saveWbCards(); }
     } else { console.warn('No wbcards in Firebase'); wbCards = loadWbCards(); }
   } catch(e){ console.error('Firebase timetable/wb load error:', e.code, e.message); ttTasks = loadTTTasks(); wbCards = loadWbCards(); }
   const _rqs=localStorage.getItem('lcms_rtqueue'); if(_rqs) rtQueueStore=JSON.parse(_rqs);
+  // Start real-time listener so queue is shared across all team devices
+  rtStartSharedListener();
+  // Load planning data
+  loadPlanData();
+  try{
+    const planSnap = await fbDB.ref('lcms/planning').get();
+    if(planSnap.exists()){
+      const val = planSnap.val();
+      if(val && typeof val === 'object'){
+        planData.tq   = Array.isArray(val.tq)   ? val.tq   : val.tq   ? Object.values(val.tq)   : [];
+        planData.qtof = Array.isArray(val.qtof) ? val.qtof : val.qtof ? Object.values(val.qtof) : [];
+      }
+      localStorage.setItem('lcms_plan', JSON.stringify(planData));
+    }
+  } catch(e){ console.warn('Plan load error:', e.message); }
   document.getElementById('asof').textContent = `Connected to Firebase · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
   buildYearPills('yearPills', y=>{activeYear=y; renderProjTable();});
   buildYearPills('stYearPills', y=>{activeYear=y; renderStatusGroups();});
@@ -1890,7 +1999,7 @@ async function initDashboard(){
   if(currentUser){
     const role=currentUser.role;
     const startTab = (role==='fin') ? 'dash'
-                   : (role==='manager'||role==='admin'||role==='ops') ? 'status'
+                   : (role==='manager'||role==='admin') ? 'status'
                    : 'status'; // ops, intern all start on Work Status
     const tabEl=document.querySelector('.tab.active');
     const viewEl=document.querySelector('.view.active');
@@ -1906,65 +2015,6 @@ async function initDashboard(){
       vtgt?.classList.add('active');
     }
   }
-
-  // ── REAL-TIME FIREBASE LISTENERS ─────────────────────────────────────────
-  // These keep all devices in sync instantly when any user makes changes
-  // _fbSaving flag prevents re-rendering when we ourselves just wrote to Firebase
-  window._fbSaving = false;
-
-  // Hold board
-  try {
-    fbDB.ref('lcms/hold').on('value', snap => {
-      if(snap.exists()) localStorage.setItem('lcms_hold', JSON.stringify(snap.val()));
-      else localStorage.removeItem('lcms_hold');
-      holdRender();
-    });
-  } catch(e){ console.warn('hold listener failed:', e); }
-
-  // Timetable tasks
-  try {
-    fbDB.ref('lcms/timetable').on('value', snap => {
-      if(snap.exists()){
-        ttTasks = snap.val();
-        localStorage.setItem('lcms_timetable', JSON.stringify(ttTasks));
-        if(!window._fbSaving && document.getElementById('v-timetable')?.classList.contains('active')){
-          renderTimetable();
-        }
-        // Project Progress depends on ttTasks — refresh it too if visible
-        if(!window._fbSaving && document.getElementById('v-projstatus')?.classList.contains('active')){
-          renderProjStatus();
-        }
-      }
-    });
-  } catch(e){ console.warn('timetable listener failed:', e); }
-
-  // Project Progress timelines
-  try {
-    fbDB.ref('lcms/timelines').on('value', snap => {
-      if(snap.exists()){
-        D.timelines = snap.val();
-        localStorage.setItem('lcms_timelines', JSON.stringify(D.timelines));
-        if(!window._fbSaving && document.getElementById('v-projstatus')?.classList.contains('active')){
-          renderProjStatus();
-        }
-      }
-    });
-  } catch(e){ console.warn('timelines listener failed:', e); }
-
-  // Work Board (Planner)
-  try {
-    fbDB.ref('lcms/wbcards').on('value', snap => {
-      if(snap.exists()){
-        const incoming = snap.val();
-        // Avoid overwriting with stale data if we just saved
-        wbCards = incoming;
-        localStorage.setItem('lcms_wb', JSON.stringify(wbCards));
-        if(!window._fbSaving && document.getElementById('v-workboard')?.classList.contains('active')){
-          renderWorkBoard();
-        }
-      }
-    });
-  } catch(e){ console.warn('wbcards listener failed:', e); }
 }
 
 window.addEventListener('DOMContentLoaded', async ()=>{
@@ -2043,62 +2093,6 @@ function sw(id,el){
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────
 
-// ── PROJECTS ON HOLD BOARD ────────────────────────────────────────────────
-function holdLoad(){ try{ return JSON.parse(localStorage.getItem('lcms_hold')||'[]'); }catch(e){ return []; } }
-function holdSave(arr){
-  localStorage.setItem('lcms_hold', JSON.stringify(arr));
-  fbSave('hold', arr); // sync to Firebase so all devices see it
-}
-
-function holdRender(){
-  const items = holdLoad();
-  const container = document.getElementById('holdItems');
-  const emptyMsg  = document.getElementById('holdEmpty');
-  if(!container) return;
-  if(!items.length){
-    container.innerHTML = '<span id="holdEmpty" style="color:#d97706;font-size:.78rem;font-style:italic">No projects on hold — add project numbers above</span>';
-    return;
-  }
-  const projs = (D && D.projects) || [];
-  container.innerHTML = items.map(code=>{
-    const p = projs.find(x=>String(x.project_no)===String(code));
-    const label = p ? `P${p.project_no} · ${p.customer||''}` : `P${code}`;
-    const detail = p ? ` <span style="font-size:.68rem;opacity:.75;margin-left:2px">${(p.method||'').slice(0,22)}${p.num_samples?' · '+p.num_samples+' smp':''}</span>` : '';
-    const statusColor = p ? ({
-      'LC-MS acquisition':'#1F4E79','Data analysis':'#C55A11','Sample received':'#375623',
-      'Waiting for samples':'#6d28d9','Project completed':'#166534','Cancel':'#991b1b'
-    }[p.work_status]||'#92400e') : '#92400e';
-    return `<span style="display:inline-flex;align-items:center;gap:5px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:20px;padding:4px 10px 4px 12px;font-size:.78rem;font-weight:600;color:${statusColor}">
-      ${label}${detail}
-      <button onclick="holdRemove('${code}')" title="Remove from hold" style="background:none;border:none;cursor:pointer;color:#f59e0b;font-size:.85rem;padding:0 0 0 4px;line-height:1">✕</button>
-    </span>`;
-  }).join('');
-}
-
-function holdAdd(){
-  const input = document.getElementById('holdInput');
-  if(!input) return;
-  const raw = input.value.trim().replace(/^[Pp]/,'');
-  if(!raw){ toast('Enter a project number'); return; }
-  const items = holdLoad();
-  if(items.includes(raw)){ toast('Already on the hold board'); input.value=''; return; }
-  // Verify it exists in D.projects (warn but allow)
-  const projs = (D && D.projects) || [];
-  const found = projs.find(x=>String(x.project_no)===String(raw));
-  if(!found){ toast(`⚠️ P${raw} not found in projects — added anyway`); }
-  items.push(raw);
-  holdSave(items);
-  holdRender();
-  input.value='';
-  if(found) toast(`⏸ P${raw} · ${found.customer||''} added to hold board`);
-}
-
-function holdRemove(code){
-  const items = holdLoad().filter(x=>x!==code);
-  holdSave(items);
-  holdRender();
-}
-
 // ── WORK TABLE TOGGLE ─────────────────────────────────────────────────────
 let workTableOpen = false;
 function toggleWorkTable(){
@@ -2134,10 +2128,12 @@ function renderDash(){
   `;
 
   const pct=Math.min((ti/REV_GOAL)*100,100);
+  if(!document.body.classList.contains('role-ops')){
   document.getElementById('pbF').style.width=pct+'%';
   document.getElementById('pbP').textContent=pct.toFixed(1)+'%';
   document.getElementById('pbC').textContent='Collected: '+fb(ti);
   document.getElementById('pbG').textContent='Goal: '+fb(REV_GOAL);
+  }
 
   const stO=['Project completed','Waiting for samples','Data analysis','Sample received','LC-MS acquisition','Cancel'];
   document.getElementById('stTbl').innerHTML=stO.map(k=>{const d=g(byS,k);return`<tr><td>${sb(k)}</td><td style="font-weight:700">${d.cnt}</td><td class="tr amt">${fb(d.val)}</td><td class="tr">${total?((d.cnt/total)*100).toFixed(0)+'%':'-'}</td></tr>`;}).join('')+
@@ -2342,7 +2338,6 @@ function srt(col,el){
 
 // ── STATUS GROUPS ─────────────────────────────────────────────────────────
 function renderStatusGroups(){
-  holdRender();
   const ps=filteredProjects();
   const grps=[
     {key:'LC-MS acquisition',lbl:'LC-MS Acquisition',cls:'sh-purple'},
@@ -3231,7 +3226,6 @@ function loadTTTasks(){
 }
 function saveTTTasks(){
   localStorage.setItem('lcms_timetable', JSON.stringify(ttTasks));
-  window._fbSaving = true; setTimeout(()=>{ window._fbSaving=false; }, 3000);
   fbSave('timetable', ttTasks);
 }
 function ttNextId(){
@@ -3249,11 +3243,7 @@ function weekMonday(d){
 }
 
 function isoDate(d){
-  // Use local date parts to avoid UTC offset issues (e.g. UTC+7 Bangkok)
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,'0');
-  const day = String(d.getDate()).padStart(2,'0');
-  return `${y}-${m}-${day}`;
+  return d.toISOString().slice(0,10);
 }
 
 function ttNav(dir){
@@ -3269,6 +3259,84 @@ function ttGoToday(){
   renderTimetable();
   renderWorkBoard();
   if(document.getElementById('rtCalcPanel')?.style.display==='flex'){ rtLoadQueue(); rtRenderQueue(); }
+}
+
+function openCopyDayModal(){
+  if(!ttWeekStart) ttWeekStart = weekMonday(new Date());
+  const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const fromSel = document.getElementById('copyDayFrom');
+  const personSel = document.getElementById('copyDayPerson');
+
+  // Populate from-day dropdown with current week days
+  fromSel.innerHTML = '';
+  for(let i=0;i<7;i++){
+    const d = new Date(ttWeekStart);
+    d.setDate(d.getDate()+i);
+    const ds = isoDate(d);
+    const tasksOnDay = (ttTasks||[]).filter(t=>t.date===ds).length;
+    const opt = document.createElement('option');
+    opt.value = ds;
+    opt.textContent = `${DAYS[i]} ${ds.slice(5)} (${tasksOnDay} task${tasksOnDay!==1?'s':''})`;
+    fromSel.appendChild(opt);
+  }
+
+  // Default "to" = tomorrow
+  const tom = new Date(); tom.setDate(tom.getDate()+1);
+  document.getElementById('copyDayTo').value = isoDate(tom);
+
+  // Populate person dropdown
+  const users = loadUsers().filter(u=>u.timetable_id);
+  personSel.innerHTML = '<option value="">All people</option>';
+  users.forEach(u=>{
+    const opt = document.createElement('option');
+    opt.value = u.timetable_id;
+    opt.textContent = u.name;
+    personSel.appendChild(opt);
+  });
+
+  // Update preview when selections change
+  fromSel.onchange = personSel.onchange = updateCopyDayPreview;
+  document.getElementById('copyDayTo').onchange = updateCopyDayPreview;
+  updateCopyDayPreview();
+  document.getElementById('copyDayMov').classList.add('open');
+}
+
+function updateCopyDayPreview(){
+  const fromDate = document.getElementById('copyDayFrom').value;
+  const person = document.getElementById('copyDayPerson').value;
+  const preview = document.getElementById('copyDayPreview');
+  let tasks = (ttTasks||[]).filter(t=>t.date===fromDate);
+  if(person) tasks = tasks.filter(t=>t.person===person);
+  if(!tasks.length){
+    preview.style.display='block';
+    preview.textContent = 'No tasks found for this selection.';
+  } else {
+    preview.style.display='block';
+    preview.textContent = `${tasks.length} task${tasks.length!==1?'s':''} will be copied.`;
+  }
+}
+
+function execCopyDay(){
+  const fromDate = document.getElementById('copyDayFrom').value;
+  const toDate   = document.getElementById('copyDayTo').value;
+  const person   = document.getElementById('copyDayPerson').value;
+  if(!toDate){ toast('Please select a destination day'); return; }
+  if(fromDate===toDate){ toast('From and To dates are the same'); return; }
+
+  let tasks = (ttTasks||[]).filter(t=>t.date===fromDate);
+  if(person) tasks = tasks.filter(t=>t.person===person);
+  if(!tasks.length){ toast('No tasks to copy'); return; }
+
+  const newTasks = tasks.map(t=>({
+    ...t,
+    id: Date.now() + Math.floor(Math.random()*10000),
+    date: toDate
+  }));
+  ttTasks = [...(ttTasks||[]), ...newTasks];
+  saveTTTasks();
+  cm('copyDayMov');
+  renderTimetable();
+  toast(`✓ Copied ${newTasks.length} task${newTasks.length!==1?'s':''} to ${toDate}`);
 }
 
 function ttGetMyRow(){
@@ -3332,7 +3400,7 @@ function loadWbCards(){
   if(migrated) localStorage.setItem('lcms_wb', JSON.stringify(cards));
   return cards;
 }
-function saveWbCards(){ localStorage.setItem('lcms_wb', JSON.stringify(wbCards)); window._fbSaving=true; setTimeout(()=>{ window._fbSaving=false; },3000); fbSave('wbcards', wbCards); }
+function saveWbCards(){ localStorage.setItem('lcms_wb', JSON.stringify(wbCards)); fbSave('wbcards', wbCards); }
 
 function getUserColorIdx(name){
   let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%WB_USER_COLORS.length;
@@ -3495,12 +3563,12 @@ function wbCalcRunTime(){
     const p = (D.projects||[]).find(x=>x.id===id);
     if(!p) return null;
     const samp = p.num_samples||0;
-    const total = samp * minsPerSamp;
+    const total = (samp + 1) * minsPerSamp; // +1 blank
     const hrs = Math.floor(total/60), mins = total%60;
-    return `P${p.project_no}: ${samp} smp × ${minsPerSamp} min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''}`;
+    return `P${p.project_no}: ${samp} smp + 1 blank × ${minsPerSamp} min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''}`;
   }).filter(Boolean);
   const totalMins = wbSelectedProjectIds.reduce((s,id)=>{
-    const p=(D.projects||[]).find(x=>x.id===id); return s+(p?((p.num_samples||0)*minsPerSamp):0);
+    const p=(D.projects||[]).find(x=>x.id===id); return s+(p?(((p.num_samples||0)+1)*minsPerSamp):0);
   },0);
   if(box) box.style.display='';
   if(detail) detail.innerHTML = rows.join('<br>') + (rows.length>1?`<br><b>Total: ${Math.floor(totalMins/60)}h ${totalMins%60}m</b>`:'');
@@ -3591,7 +3659,7 @@ function saveWbCard(){
   const minsPerSamp = RUN_TIME[method]||0;
   const runMins = wbSelectedProjectIds.reduce((s,id)=>{
     const p=(D.projects||[]).find(x=>x.id===id);
-    return s+(p?((p.num_samples||0)*minsPerSamp):0);
+    return s+(p?(((p.num_samples||0)+1)*minsPerSamp):0);
   },0);
   const card = {
     id: existingId ? parseInt(existingId) : Date.now(),
@@ -3706,27 +3774,90 @@ function psNav(dir){
 }
 function psNavToday(){ psWeekStart = weekMonday(new Date()); renderProjStatus(); }
 
+// Maps timetable task types → pipeline step IDs
+const TT_TYPE_TO_PS_STEP = {
+  'prep':     'sample_prep',
+  'acq':      'lc_ms_acq',
+  'data':     'data_analysis',
+  'revision': 'client_report',
+  'method':   'protocol',
+};
+const PS_STEP_ORDER = ['protocol','sample_prep','lc_ms_acq','data_analysis','client_report'];
+
+function inferTimelineFromTimetable(projId){
+  if(!ttTasks || !ttTasks.length) return false;
+  // Collect all timetable tasks that reference this project, sorted oldest→newest
+  const projTasks = ttTasks.filter(t=>(Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number).includes(Number(projId)))
+                           .sort((a,b)=>a.date.localeCompare(b.date));
+  if(!projTasks.length) return false;
+
+  // Collect per-step: who was assigned, latest date seen
+  const stepPeople  = {}; // stepId → Set of names
+  const stepSeen    = {}; // stepId → true
+  projTasks.forEach(t=>{
+    const sid = TT_TYPE_TO_PS_STEP[t.type];
+    if(!sid) return;
+    stepSeen[sid] = true;
+    if(!stepPeople[sid]) stepPeople[sid] = new Set();
+    if(t.person) stepPeople[sid].add(t.person);
+  });
+
+  const seenIds = PS_STEP_ORDER.filter(s=>stepSeen[s]);
+  if(!seenIds.length) return false;
+
+  // Furthest step seen = the most advanced one
+  const furthestIdx = Math.max(...seenIds.map(s=>PS_STEP_ORDER.indexOf(s)));
+
+  const tl = getTimeline(projId);
+  PS_STEP_ORDER.forEach((sid, idx)=>{
+    if(!tl.steps[sid]) tl.steps[sid] = {status:'pending', assignees:[]};
+    if(idx < furthestIdx){
+      tl.steps[sid].status = 'done';
+      if(stepPeople[sid]) tl.steps[sid].assignees = [...stepPeople[sid]];
+    } else if(idx === furthestIdx){
+      tl.steps[sid].status = 'current';
+      if(stepPeople[sid]) tl.steps[sid].assignees = [...stepPeople[sid]];
+    }
+    // Steps beyond furthest stay pending (don't overwrite if already set manually)
+  });
+  return true;
+}
+
 function getTimeline(projId){
   if(!D.timelines) D.timelines = {};
   if(!D.timelines[projId]){
-    D.timelines[projId] = { steps:{} };
+    D.timelines[projId] = { steps:{}, _autoInferred: false };
     PS_STEPS.forEach(s=>{ D.timelines[projId].steps[s.id] = {status:'pending', assignees:[]}; });
+  }
+  // Auto-infer from timetable if this project has never been manually set
+  const tl = D.timelines[projId];
+  const allPending = PS_STEPS.every(s=>(tl.steps[s.id]||{}).status==='pending');
+  if(allPending && !tl._manuallyEdited){
+    inferTimelineFromTimetable(projId);
   }
   return D.timelines[projId];
 }
 
 function saveTimelines(){
   localStorage.setItem('lcms_timelines', JSON.stringify(D.timelines||{}));
-  window._fbSaving = true; setTimeout(()=>{ window._fbSaving=false; }, 3000);
-  fbSave('timelines', D.timelines); // no auth check — all roles need to save
+  if(fbAuth.currentUser) fbSave('timelines', D.timelines);
+}
+
+function normTTask(t){
+  // Ensure project_ids is always a real array (Firebase may return {0:x,1:y})
+  if(t && t.project_ids && !Array.isArray(t.project_ids))
+    t.project_ids = Object.values(t.project_ids).map(Number);
+  else if(t && t.project_ids)
+    t.project_ids = t.project_ids.map(Number);
+  return t;
 }
 
 function renderProjStatus(){
-  // Ensure ttTasks is loaded before rendering
-  if(!ttTasks) ttTasks = loadTTTasks();
-
-  // psWeekStart should be independent of ttWeekStart
-  if(!psWeekStart) psWeekStart = weekMonday(new Date());
+  // Ensure ttTasks is loaded (may be null if Firebase hasn't responded yet)
+  if(!ttTasks){ ttTasks = loadTTTasks(); }
+  // Normalise all tasks
+  if(Array.isArray(ttTasks)) ttTasks.forEach(normTTask);
+  if(!psWeekStart) psWeekStart = ttWeekStart || weekMonday(new Date());
 
   const wl = document.getElementById('psWeekLabel');
   if(wl){
@@ -3749,26 +3880,15 @@ function renderProjStatus(){
   let projects = [];
 
   if(filter === 'week'){
-    const wStartStr = isoDate(psWeekStart);
-    const wEndDate = new Date(psWeekStart); wEndDate.setDate(wEndDate.getDate()+6);
-    const wEndStr = isoDate(wEndDate);
-
-    // Guard: if ttTasks is still empty, show loading state and retry
-    if(!ttTasks || !ttTasks.length){
-      const grid = document.getElementById('psGrid');
-      if(grid) grid.innerHTML = `<div style="text-align:center;padding:40px;color:#94a3b8">
-        <div style="font-size:1.5rem;margin-bottom:8px">⏳</div>
-        <div style="font-weight:600">Loading timetable data…</div>
-      </div>`;
-      setTimeout(()=>renderProjStatus(), 800);
-      return;
-    }
-
+    // Projects with timetable tasks this week
+    const wEnd = new Date(psWeekStart); wEnd.setDate(wEnd.getDate()+6);
     const weekProjIds = new Set(
-      ttTasks.filter(t=> t.date >= wStartStr && t.date <= wEndStr)
-             .flatMap(t=>t.project_ids||[])
+      (ttTasks||[]).filter(t=>{
+        const d = new Date(t.date+'T00:00:00');
+        return d >= psWeekStart && d <= wEnd;
+      }).flatMap(t=>(Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number))
     );
-    projects = [...weekProjIds].map(id=>(D.projects||[]).find(p=>p.id===id)).filter(Boolean);
+    projects = [...weekProjIds].map(id=>(D.projects||[]).find(p=>Number(p.id)===id)).filter(Boolean);
   } else {
     projects = (D.projects||[]).filter(p=>!['Project completed','Cancel'].includes(p.work_status) && String(p.year)==='2026');
   }
@@ -3785,57 +3905,13 @@ function renderProjStatus(){
     return;
   }
 
-  // Split into QTOF (non-TQ) and TQ groups — TQ goes at the bottom in yellow
-  const isTQ = p => (p.system||'').toUpperCase() === 'TQ' ||
-                    /quantif/i.test(p.method||'');
-  const qtofProjs = projects.filter(p => !isTQ(p));
-  const tqProjs   = projects.filter(p =>  isTQ(p));
-
-  let html = qtofProjs.map(p => renderPsCard(p)).join('');
-  if(tqProjs.length){
-    html += `<div style="margin:18px 0 10px;display:flex;align-items:center;gap:10px">
-      <div style="flex:1;height:2px;background:linear-gradient(to right,#fde68a,transparent)"></div>
-      <span style="background:#fef9c3;color:#854d0e;border:1.5px solid #fde68a;border-radius:10px;padding:3px 14px;font-size:.75rem;font-weight:700">⚡ TQ / Quantification Projects</span>
-      <div style="flex:1;height:2px;background:linear-gradient(to left,#fde68a,transparent)"></div>
-    </div>`;
-    html += tqProjs.map(p => renderPsCard(p, true)).join('');
-  }
-  grid.innerHTML = html;
+  grid.innerHTML = projects.map(p => renderPsCard(p)).join('');
 }
 
-function renderPsCard(p, isTQCard=false){
+function renderPsCard(p){
   const tl = getTimeline(p.id);
   const mc = (typeof WB_METHOD_COLORS!=='undefined'&&WB_METHOD_COLORS[p.method])||{bg:'#f1f5f9',text:'#475569',border:'#e2e8f0'};
-  // TQ card yellow tint
-  const tqCardStyle = isTQCard ? 'border-color:#fde68a;background:linear-gradient(135deg,#fffbeb,#fef9c3);' : '';
   const statusBadge = `<span style="padding:2px 9px;border-radius:10px;font-size:.68rem;font-weight:600;background:#e0f2fe;color:#0369a1">${p.work_status||'—'}</span>`;
-
-  // COMPLETED STATE — all steps done, Client Report marked done
-  if(tl.completed){
-    const doneAt = tl.completed_at ? new Date(tl.completed_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
-    return `<div class="ps-card" id="ps-proj-${p.id}" style="border:2px solid #166534;background:linear-gradient(135deg,#f0fdf4,#dcfce7);opacity:.92">
-      <div class="ps-card-hdr" style="background:transparent;border-bottom:1px solid #bbf7d0">
-        <span class="ps-proj-no" style="color:#166534">P${p.project_no}</span>
-        <span style="font-weight:600;font-size:.82rem;color:#166534;text-decoration:line-through;opacity:.7">${p.customer||'—'}</span>
-        <span class="ps-method-badge" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${p.method||'—'}</span>
-        <span style="font-size:.72rem;color:#166534">${p.num_samples||0} samples</span>
-        <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
-          <span style="padding:2px 10px;border-radius:10px;font-size:.72rem;font-weight:700;background:#166534;color:#fff">✅ Week Complete</span>
-          <button onclick="psUncomplete(${p.id},event)" style="padding:2px 9px;border-radius:8px;border:1px solid #86efac;background:#fff;color:#166534;font-size:.68rem;font-weight:600;cursor:pointer">↩ Undo</button>
-        </span>
-      </div>
-      <div style="padding:14px 20px;display:flex;align-items:center;gap:14px">
-        <span style="font-size:2.2rem">✅</span>
-        <div>
-          <div style="font-weight:700;color:#166534;font-size:.88rem">All steps completed!</div>
-          <div style="font-size:.72rem;color:#4ade80;margin-top:2px">${doneAt ? 'Completed ' + doneAt : 'Completed this week'}</div>
-          <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
-            ${PS_STEPS.map(s=>`<span style="padding:2px 8px;border-radius:8px;background:#dcfce7;color:#166534;font-size:.65rem;font-weight:600;border:1px solid #bbf7d0">${s.emoji} ${s.label}</span>`).join('')}
-          </div>
-        </div>
-      </div>
-    </div>`;
-  }
 
   // Determine timeline line progress
   const stepStatuses = PS_STEPS.map(s=>(tl.steps[s.id]||{}).status||'pending');
@@ -3852,9 +3928,15 @@ function renderPsCard(p, isTQCard=false){
       return `<span class="ps-user-chip" style="background:${WB_USER_COLORS[idx]};color:${WB_USER_TEXT[idx]}">${name}</span>`;
     }).join('');
     const dotContent = status==='done' ? '✓' : status==='current' ? '▶' : s.emoji;
+    const dateHtml = (st.start_date||st.end_date) ? `
+      <div style="font-size:.6rem;color:#64748b;text-align:center;margin-top:3px;line-height:1.3">
+        ${st.start_date?`<span style="display:block">${st.start_date.slice(5)}</span>`:''}
+        ${st.end_date&&st.end_date!==st.start_date?`<span style="display:block;color:#94a3b8">→ ${st.end_date.slice(5)}</span>`:''}
+      </div>` : '';
     return `<div class="ps-step ${status}" onclick="openPsPopover(${p.id},'${s.id}',event)" title="Click to assign / change status">
       <div class="ps-dot">${dotContent}</div>
       <div class="ps-step-label">${s.label}</div>
+      ${dateHtml}
       <div class="ps-step-users">${userChips}</div>
     </div>`;
   }).join('');
@@ -3868,13 +3950,23 @@ function renderPsCard(p, isTQCard=false){
     return `<div style="flex:1;height:3px;background:${color};align-self:auto;margin-top:18px;position:relative;z-index:0"></div>`;
   }).join('');
 
-  return `<div class="ps-card" id="ps-proj-${p.id}" style="${tqCardStyle}">
+  return `<div class="ps-card" id="ps-proj-${p.id}">
     <div class="ps-card-hdr">
       <span class="ps-proj-no">P${p.project_no}</span>
       <span style="font-weight:600;font-size:.82rem;color:#1e293b">${p.customer||'—'}</span>
       <span class="ps-method-badge" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${p.method||'—'}</span>
       <span style="font-size:.72rem;color:#64748b">${p.num_samples||0} samples</span>
       ${statusBadge}
+      <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        <button onclick="editProjId(${p.id})" title="Edit project details" class="edit-btn"
+          style="padding:3px 10px;font-size:.68rem;background:#f8fafc;color:#475569;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;white-space:nowrap">
+          ✏️ Edit
+        </button>
+        <button onclick="psSyncFromTimetable(${p.id})" title="Re-sync progress from timetable tasks"
+          style="padding:3px 10px;font-size:.68rem;background:#f0f6ff;color:#1F4E79;border:1px solid #bcd3ed;border-radius:8px;cursor:pointer;white-space:nowrap">
+          ↻ Sync from timetable
+        </button>
+      </div>
     </div>
     <div class="ps-timeline-wrap">
       <div style="display:flex;align-items:flex-start;position:relative">
@@ -3913,23 +4005,7 @@ function openPsPopover(projId, stepId, event){
   const st = tl.steps[stepId]||{status:'pending',assignees:[]};
   const users = loadUsers().filter(u=>u.timetable_id);
 
-  const isLastStep = stepId === PS_STEPS[PS_STEPS.length-1].id;
   document.getElementById('psPopTitle').textContent = `${step.emoji} ${step.label}`;
-  // Highlight "Done" button if this is the final step (will archive project)
-  const doneBtn = document.querySelector("#psPopover button[onclick=\"psSetStepStatus('done')\"]");
-  if(doneBtn){
-    if(isLastStep){
-      doneBtn.textContent = '✅ Done — Complete Project!';
-      doneBtn.style.background='#166534';
-      doneBtn.style.color='#fff';
-      doneBtn.style.borderColor='#166534';
-    } else {
-      doneBtn.textContent = '✓ Done';
-      doneBtn.style.background='#dcfce7';
-      doneBtn.style.color='#166534';
-      doneBtn.style.borderColor='#bbf7d0';
-    }
-  }
   document.getElementById('psPopUsers').innerHTML = users.map(u=>{
     const assigned = (st.assignees||[]).includes(u.name);
     const idx = getUserColorIdx(u.name);
@@ -3941,21 +4017,34 @@ function openPsPopover(projId, stepId, event){
 
   const pop = document.getElementById('psPopover');
   pop.style.display = 'block';
-  const rect = event.target.getBoundingClientRect();
-  const popH = pop.offsetHeight || 320;
-  const popW = pop.offsetWidth || 220;
-  let top = rect.bottom + 6;
-  let left = rect.left;
-  // Flip above if not enough room below
-  if (top + popH > window.innerHeight - 10) top = Math.max(10, rect.top - popH - 6);
-  // Clamp horizontally
-  if (left + popW > window.innerWidth - 10) left = window.innerWidth - popW - 10;
-  if (left < 10) left = 10;
-  pop.style.top = top + 'px';
-  pop.style.left = left + 'px';
+  const stepEl = event.target.closest('.ps-step') || event.target;
+  const rect = stepEl.getBoundingClientRect();
+  const popH = 300, popW = 230;
+  const top  = (rect.bottom + 8 + popH > window.innerHeight) ? rect.top - popH - 4 : rect.bottom + 6;
+  const left = Math.min(rect.left, window.innerWidth - popW - 10);
+  pop.style.top  = Math.max(8, top)  + 'px';
+  pop.style.left = Math.max(8, left) + 'px';
+
+  // Populate date fields
+  const stepData = tl.steps[stepId]||{};
+  document.getElementById('psPopStartDate').value = stepData.start_date||'';
+  document.getElementById('psPopEndDate').value   = stepData.end_date||'';
 
   // Close on outside click
   setTimeout(()=>document.addEventListener('click', closePsPopoverOutside, {once:true}), 50);
+}
+
+function psSetStepDate(field, value){
+  if(!psPopoverCtx) return;
+  const {projId, stepId} = psPopoverCtx;
+  const tl = getTimeline(projId);
+  if(!tl.steps[stepId]) tl.steps[stepId]={status:'pending',assignees:[]};
+  tl._manuallyEdited = true;
+  tl.steps[stepId][field] = value;
+  saveTimelines();
+  // Re-render card to show updated date badge
+  const card = document.getElementById(`ps-proj-${projId}`);
+  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
 }
 
 function closePsPopoverOutside(e){
@@ -3971,14 +4060,29 @@ function psToggleUser(name, checked){
   const {projId, stepId} = psPopoverCtx;
   const tl = getTimeline(projId);
   if(!tl.steps[stepId]) tl.steps[stepId]={status:'pending',assignees:[]};
-  const arr = tl.steps[stepId].assignees||[];
-  if(checked && !arr.includes(name)) arr.push(name);
-  if(!checked){ tl.steps[stepId].assignees = arr.filter(x=>x!==name); }
-  else { tl.steps[stepId].assignees = arr; }
+  tl._manuallyEdited = true;
+  let arr = tl.steps[stepId].assignees||[];
+  if(checked) arr = arr.includes(name) ? arr : [...arr, name];
+  else        arr = arr.filter(x=>x!==name);
+  tl.steps[stepId].assignees = arr;
   saveTimelines();
-  // Re-render just this card
   const card = document.getElementById(`ps-proj-${projId}`);
-  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj){ const _isTQ=(proj.system||'').toUpperCase()==='TQ'||/quantif/i.test(proj.method||''); card.outerHTML=renderPsCard(proj, _isTQ); } }
+  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
+}
+
+function psSyncFromTimetable(projId){
+  if(!D.timelines) D.timelines = {};
+  // Reset manual flag so inference can run fresh
+  if(D.timelines[projId]) D.timelines[projId]._manuallyEdited = false;
+  const updated = inferTimelineFromTimetable(projId);
+  if(updated){
+    saveTimelines();
+    const card = document.getElementById(`ps-proj-${projId}`);
+    if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
+    toast('Progress synced from timetable ✓');
+  } else {
+    toast('No timetable tasks found for this project');
+  }
 }
 
 function psSetStepStatus(status){
@@ -3986,63 +4090,337 @@ function psSetStepStatus(status){
   const {projId, stepId} = psPopoverCtx;
   const tl = getTimeline(projId);
   if(!tl.steps[stepId]) tl.steps[stepId]={status:'pending',assignees:[]};
+  tl._manuallyEdited = true; // prevent auto-inference from overwriting manual edits
   // If setting current, unset any other current
   if(status==='current'){
     PS_STEPS.forEach(s=>{ if(tl.steps[s.id]&&tl.steps[s.id].status==='current') tl.steps[s.id].status='pending'; });
   }
   tl.steps[stepId].status = status;
-
-  // If the final step (Client Report) is marked done and all steps done -> archive as complete
-  const lastStep = PS_STEPS[PS_STEPS.length - 1];
-  if(stepId === lastStep.id && status === 'done'){
-    const allDone = PS_STEPS.every(s=>(tl.steps[s.id]||{}).status==='done');
-    if(allDone){
-      tl.completed = true;
-      tl.completed_at = new Date().toISOString();
-      setTimeout(()=>toast('🎉 Project marked as fully complete!'), 50);
-    }
-  }
-  // If un-marking done on final step, clear completed flag
-  if(stepId === lastStep.id && status !== 'done'){
-    tl.completed = false;
-  }
-
   saveTimelines();
-  closePsPopover();
   const card = document.getElementById(`ps-proj-${projId}`);
-  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj){ const _isTQ=(proj.system||'').toUpperCase()==='TQ'||/quantif/i.test(proj.method||''); card.outerHTML=renderPsCard(proj, _isTQ); } }
+  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj) card.outerHTML=renderPsCard(proj); }
 }
 
-function psUncomplete(projId, event){
-  if(event) event.stopPropagation();
-  const tl = getTimeline(projId);
-  tl.completed = false;
-  const lastStep = PS_STEPS[PS_STEPS.length - 1];
-  if(tl.steps[lastStep.id]) tl.steps[lastStep.id].status = 'current';
-  saveTimelines();
-  const card = document.getElementById(`ps-proj-${projId}`);
-  if(card){ const proj=(D.projects||[]).find(p=>p.id===projId); if(proj){ const _isTQ=(proj.system||'').toUpperCase()==='TQ'||/quantif/i.test(proj.method||''); card.outerHTML=renderPsCard(proj, _isTQ); } }
-  toast('Completion undone — project back in progress');
+// ── LONG-TERM PLANNING GANTT ─────────────────────────────────────────────
+let planData = { tq: [], qtof: [] };
+let planCollapsed = {}; // monthKey -> true if collapsed
+let planSelectedProj = null; // {id, project_no, customer, method}
+
+// Generate 18 months starting Jan 2026
+function planGetMonths(){
+  const months = [];
+  const base = new Date(2026, 0, 1);
+  for(let i=0;i<18;i++){
+    const d = new Date(base.getFullYear(), base.getMonth()+i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = d.toLocaleDateString('en-GB',{month:'short', year:'numeric'});
+    months.push({key, label, year:d.getFullYear(), month:d.getMonth()+1});
+  }
+  return months;
+}
+
+function planWeekIndex(months, monthKey, week){
+  const mi = months.findIndex(m=>m.key===monthKey);
+  if(mi<0) return -1;
+  return mi*4 + (parseInt(week)-1);
+}
+
+function savePlanData(){
+  localStorage.setItem('lcms_plan', JSON.stringify(planData));
+  if(fbAuth.currentUser) fbSave('planning', planData);
+}
+
+function loadPlanData(){
+  const s = localStorage.getItem('lcms_plan');
+  if(s){ try{ planData = JSON.parse(s); } catch(e){} }
+  if(!planData.tq) planData.tq=[];
+  if(!planData.qtof) planData.qtof=[];
+}
+
+function planMethodColor(method){
+  const m = (method||'').toLowerCase();
+  if(m.includes('metabolom') || m.includes('lipid') || m.includes('metabolite')) return {bg:'#dcfce7',text:'#166534',border:'#86efac'};
+  if(m.includes('proteom') || m.includes('peptidom')) return {bg:'#fce7f3',text:'#9d174d',border:'#f9a8d4'};
+  if(m.includes('peptide') || m.includes('protein') || m.includes('intact')) return {bg:'#ede9fe',text:'#5b21b6',border:'#c4b5fd'};
+  if(m.includes('quant')) return {bg:'#fef3c7',text:'#92400e',border:'#fcd34d'};
+  return {bg:'#f1f5f9',text:'#475569',border:'#cbd5e1'};
+}
+
+function renderPlanning(){
+  if(!planData.tq) planData.tq=[];
+  if(!planData.qtof) planData.qtof=[];
+  renderPlanGantt('tq');
+  renderPlanGantt('qtof');
+}
+
+function renderPlanGantt(instrument){
+  const wrap = document.getElementById('plan-'+instrument);
+  if(!wrap) return;
+  const months = planGetMonths();
+  const rows = planData[instrument]||[];
+
+  // Build header
+  let hdrMonth='', hdrWeek='';
+  hdrMonth += `<th class="plan-label-hdr" rowspan="2">Project</th>`;
+  months.forEach(m=>{
+    const collapsed = planCollapsed[m.key];
+    if(collapsed){
+      hdrMonth += `<th class="plan-month-hdr plan-collapsed-month" colspan="1" onclick="planToggleMonth('${m.key}')" title="Click to expand">${m.label.split(' ')[0]}</th>`;
+      hdrWeek += `<td class="plan-cell plan-collapsed-month" style="background:#f0f6ff;padding:0"></td>`;
+    } else {
+      hdrMonth += `<th class="plan-month-hdr" colspan="4" onclick="planToggleMonth('${m.key}')">${m.label} <span style="opacity:.6;font-size:.65rem">▲</span></th>`;
+      ['W1','W2','W3','W4'].forEach(w=>{
+        hdrWeek += `<th class="plan-week-hdr">${w}</th>`;
+      });
+    }
+  });
+
+  // Build rows
+  let rowsHtml = rows.map(row=>{
+    const mc = planMethodColor(row.method);
+    const startIdx = planWeekIndex(months, row.start_month, row.start_week);
+    const endIdx   = planWeekIndex(months, row.end_month,   row.end_week);
+    let cells = '';
+    let colIdx = 0;
+    months.forEach(m=>{
+      if(planCollapsed[m.key]){
+        // Single collapsed cell — check if bar passes through this month
+        const mStart = planWeekIndex(months, m.key, 1);
+        const mEnd   = planWeekIndex(months, m.key, 4);
+        const hasBar = startIdx <= mEnd && endIdx >= mStart;
+        cells += `<td class="plan-cell plan-collapsed-month" style="background:${hasBar?mc.bg:'#fafafa'}"></td>`;
+        colIdx++;
+      } else {
+        for(let w=1;w<=4;w++){
+          const ci = planWeekIndex(months, m.key, w);
+          const inRange = ci>=startIdx && ci<=endIdx;
+          const isStart = ci===startIdx;
+          const isEnd   = ci===endIdx;
+          let barClass = '';
+          if(inRange){
+            if(isStart && isEnd) barClass='b-solo';
+            else if(isStart)     barClass='b-start';
+            else if(isEnd)       barClass='b-end';
+            else                 barClass='b-mid';
+          }
+          cells += `<td class="plan-cell">
+            ${inRange?`<div class="plan-bar ${barClass}" style="background:${mc.bg};border-top:2px solid ${mc.border};border-bottom:2px solid ${mc.border};${isStart?'border-left:2px solid '+mc.border+';':''} ${isEnd?'border-right:2px solid '+mc.border+';':''}"></div>`:''}
+          </td>`;
+          colIdx++;
+        }
+      }
+    });
+    const noteStr = row.notes ? `<span style="font-size:.62rem;color:#94a3b8;display:block;margin-top:1px">${row.notes}</span>` : '';
+    return `<tr>
+      <td class="plan-row-label">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">
+          <div style="flex:1;min-width:0">
+            <span class="plan-proj-no">P${row.project_no}</span>
+            <span class="plan-proj-cust">${row.customer||''}</span>
+            <span class="plan-method-tag" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${row.method||'—'}</span>
+            ${noteStr}
+          </div>
+          <button onclick="event.stopPropagation();planDeleteRow('${instrument}',${row.id})"
+            title="Remove from plan"
+            style="flex-shrink:0;padding:2px 7px;font-size:.72rem;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:6px;cursor:pointer;line-height:1.4"
+            onmouseover="this.style.background='#fca5a5'" onmouseout="this.style.background='#fee2e2'">✕</button>
+        </div>
+      </td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<table class="plan-table">
+    <thead>
+      <tr>${hdrMonth}</tr>
+      <tr>${hdrWeek}</tr>
+    </thead>
+    <tbody>
+      ${rowsHtml}
+      <tr class="plan-add-row" onclick="openPlanModal('${instrument}')">
+        <td colspan="${1 + months.reduce((s,m)=>s+(planCollapsed[m.key]?1:4),0)}">+ Add project row</td>
+      </tr>
+    </tbody>
+  </table>`;
+}
+
+function planToggleMonth(monthKey){
+  planCollapsed[monthKey] = !planCollapsed[monthKey];
+  renderPlanning();
+}
+
+function openPlanModal(instrument, editId=null){
+  planSelectedProj = null;
+  document.getElementById('plan_instrument').value = instrument;
+  document.getElementById('plan_edit_id').value = editId||'';
+  document.getElementById('planMTitle').textContent = (editId?'Edit':'Add') + ' Project — ' + instrument.toUpperCase();
+  document.getElementById('plan_search').value = '';
+  document.getElementById('plan_results').style.display = 'none';
+  document.getElementById('plan_selected').style.display = 'none';
+  document.getElementById('plan_selected').textContent = '';
+  document.getElementById('plan_proj_id').value = '';
+  document.getElementById('plan_notes').value = '';
+
+  // Populate month dropdowns
+  const months = planGetMonths();
+  const opts = months.map(m=>`<option value="${m.key}">${m.label}</option>`).join('');
+  document.getElementById('plan_start_month').innerHTML = opts;
+  document.getElementById('plan_end_month').innerHTML   = opts;
+
+  // If editing, pre-fill
+  if(editId){
+    const instrument2 = document.getElementById('plan_instrument').value;
+    const row = (planData[instrument2]||[]).find(r=>r.id===editId);
+    if(row){
+      planSelectedProj = {id:row.project_id, project_no:row.project_no, customer:row.customer, method:row.method};
+      document.getElementById('plan_selected').textContent = `P${row.project_no} — ${row.customer||''}`;
+      document.getElementById('plan_selected').style.display = 'block';
+      document.getElementById('plan_proj_id').value = row.project_id;
+      document.getElementById('plan_start_month').value = row.start_month;
+      document.getElementById('plan_start_week').value  = row.start_week;
+      document.getElementById('plan_end_month').value   = row.end_month;
+      document.getElementById('plan_end_week').value    = row.end_week;
+      document.getElementById('plan_notes').value       = row.notes||'';
+    }
+  }
+  document.getElementById('planMov').classList.add('open');
+}
+
+function planSearchProjects(){
+  const q = document.getElementById('plan_search').value.toLowerCase().trim();
+  const res = document.getElementById('plan_results');
+  if(!q){ res.style.display='none'; return; }
+  const matches = (D.projects||[]).filter(p=>
+    String(p.project_no).toLowerCase().includes(q) ||
+    (p.customer||'').toLowerCase().includes(q) ||
+    (p.project_detail||'').toLowerCase().includes(q)
+  ).slice(0,12);
+  if(!matches.length){ res.style.display='none'; return; }
+  res.innerHTML = matches.map(p=>`
+    <div onclick="planSelectProj(${p.id})" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:.82rem;transition:background .12s"
+      onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background=''">
+      <strong style="color:#1F4E79">P${p.project_no}</strong>
+      <span style="color:#64748b;margin-left:6px">${p.customer||''}</span>
+      <span style="float:right;font-size:.7rem;color:#94a3b8">${p.method||''}</span>
+    </div>
+  `).join('');
+  res.style.display = 'block';
+}
+
+function planSelectProj(id){
+  const p = (D.projects||[]).find(x=>x.id===id);
+  if(!p) return;
+  planSelectedProj = {id:p.id, project_no:p.project_no, customer:p.customer, method:p.method};
+  document.getElementById('plan_proj_id').value = id;
+  document.getElementById('plan_search').value = '';
+  document.getElementById('plan_results').style.display = 'none';
+  document.getElementById('plan_selected').textContent = `P${p.project_no} — ${p.customer||''} (${p.method||'—'})`;
+  document.getElementById('plan_selected').style.display = 'block';
+}
+
+function savePlanRow(){
+  const instrument  = document.getElementById('plan_instrument').value;
+  const projId      = parseInt(document.getElementById('plan_proj_id').value)||0;
+  const startMonth  = document.getElementById('plan_start_month').value;
+  const startWeek   = parseInt(document.getElementById('plan_start_week').value)||1;
+  const endMonth    = document.getElementById('plan_end_month').value;
+  const endWeek     = parseInt(document.getElementById('plan_end_week').value)||4;
+  const notes       = document.getElementById('plan_notes').value.trim();
+  const editId      = document.getElementById('plan_edit_id').value;
+
+  if(!projId){ toast('Please select a project first'); return; }
+
+  const months = planGetMonths();
+  const si = planWeekIndex(months, startMonth, startWeek);
+  const ei = planWeekIndex(months, endMonth,   endWeek);
+  if(ei < si){ toast('End must be on or after start'); return; }
+
+  const p = (D.projects||[]).find(x=>x.id===projId);
+  const row = {
+    id: editId ? parseInt(editId) : Date.now(),
+    project_id: projId,
+    project_no: p?.project_no||'?',
+    customer:   p?.customer||'',
+    method:     p?.method||'',
+    start_month: startMonth, start_week: startWeek,
+    end_month:   endMonth,   end_week:   endWeek,
+    notes
+  };
+
+  if(!planData[instrument]) planData[instrument]=[];
+  if(editId){
+    const i = planData[instrument].findIndex(r=>r.id===parseInt(editId));
+    if(i>=0) planData[instrument][i]=row; else planData[instrument].push(row);
+  } else {
+    planData[instrument].push(row);
+  }
+  savePlanData();
+  cm('planMov');
+  toast('Saved ✓');
+  renderPlanning();
+}
+
+function planDeleteRow(instrument, id){
+  if(!confirm('Remove this project from the plan?')) return;
+  planData[instrument] = (planData[instrument]||[]).filter(r=>r.id!==id);
+  savePlanData();
+  renderPlanning();
+  toast('Removed');
 }
 
 // ── RUN TIME CALCULATOR ───────────────────────────────────────────────────
 let rtQueueStore = {}; // keyed by week ISO date
 let rtQueue = [];
+let _rtQueueListenerActive = false;
 
 function rtGetWeekKey(){ return ttWeekStart ? isoDate(ttWeekStart) : isoDate(weekMonday(new Date())); }
 function rtLoadQueue(){ 
   const k=rtGetWeekKey(); 
   rtQueue=(rtQueueStore[k]||[]);
-  // Restore saved start time
+  // Restore saved start time + day
   const meta = rtQueueStore[k+'_meta'];
   const startEl = document.getElementById('rtStart');
+  const startDayEl = document.getElementById('rtStartDay');
   if(meta?.startTime && startEl) startEl.value = meta.startTime;
+  if(meta?.startDay != null && startDayEl) startDayEl.value = meta.startDay;
 }
 function rtSaveQueue(){
   const k=rtGetWeekKey();
   rtQueueStore[k]=rtQueue;
+  // Save start day too
+  const startEl = document.getElementById('rtStart');
+  const startDayEl = document.getElementById('rtStartDay');
+  if(startEl || startDayEl){
+    rtQueueStore[k+'_meta'] = {
+      startTime: startEl?.value || '08:00',
+      startDay:  startDayEl ? parseInt(startDayEl.value)||0 : 0
+    };
+  }
   localStorage.setItem('lcms_rtqueue', JSON.stringify(rtQueueStore));
+  // Push to Firebase — the real-time listener on all devices will pick this up
   if(fbAuth.currentUser) fbSave('rtqueue', rtQueueStore);
+}
+
+function rtStartSharedListener(){
+  if(_rtQueueListenerActive) return;
+  _rtQueueListenerActive = true;
+  fbDB.ref('lcms/rtqueue').on('value', snap=>{
+    if(!snap.exists()) return;
+    const val = snap.val();
+    // Normalize: Firebase may return array-like object
+    const store = {};
+    if(val && typeof val === 'object'){
+      Object.entries(val).forEach(([k,v])=>{
+        store[k] = Array.isArray(v) ? v : (v && typeof v==='object' && !v.startTime) ? Object.values(v) : v;
+      });
+    }
+    rtQueueStore = store;
+    localStorage.setItem('lcms_rtqueue', JSON.stringify(rtQueueStore));
+    rtLoadQueue();
+    // Re-render queue if the timetable tab is active
+    const queueEl = document.getElementById('rtQueue');
+    if(queueEl && queueEl.offsetParent !== null) rtRenderQueue();
+  });
 }
 
 const RT_MINS = {
@@ -4078,7 +4456,7 @@ function rtFilterProjects(){
   const filtered = q ? active.filter(p=>String(p.project_no).toLowerCase().includes(q)||(p.customer||'').toLowerCase().includes(q)) : active;
   sel.innerHTML = filtered.slice(0,60).map(p=>{
     const minsPerSamp = RT_MINS[p.method]||0;
-    const total = (p.num_samples||0) * minsPerSamp;
+    const total = ((p.num_samples||0) + 1) * minsPerSamp; // +1 blank
     const timeStr = total ? ` → ${total>=60?Math.floor(total/60)+'h'+(total%60?total%60+'m':''):total+'m'}` : '';
     return `<option value="${p.id}">P${p.project_no} · ${p.customer||'?'} · ${p.method||'—'} (${p.num_samples||0} smp${timeStr})</option>`;
   }).join('');
@@ -4125,25 +4503,30 @@ function rtRenderQueue(){
     return;
   }
 
-  // Calculate timeline
-  const startVal = (document.getElementById('rtStart')||{value:'08:00'}).value || '08:00';
+  // Calculate timeline with day tracking
+  const startVal  = (document.getElementById('rtStart')||{value:'08:00'}).value || '08:00';
+  const startDayI = parseInt((document.getElementById('rtStartDay')||{value:'0'}).value)||0;
   const [startH, startM] = startVal.split(':').map(Number);
+  const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   let currentMins = startH*60 + startM;
+  let currentDayOffset = 0; // days from start day
 
   const rows = rtQueue.map((item, i) => {
     const minsPerSamp = RT_MINS[item.method]||0;
-    const totalMins = item.num_samples * minsPerSamp;
-    const startTime = minsToTime(currentMins);
+    const totalMins = (item.num_samples + 1) * minsPerSamp; // +1 blank per project
+    const startTimeLabel = minsToTimeWithDay(currentMins, currentDayOffset, startDayI, DAYS);
     currentMins += totalMins;
-    const endTime = minsToTime(currentMins);
+    // Advance day offset for overnight runs
+    while(currentMins >= 1440){ currentMins -= 1440; currentDayOffset++; }
+    const endTimeLabel = minsToTimeWithDay(currentMins, currentDayOffset, startDayI, DAYS);
     const detail = RT_METHOD_DETAIL[item.method]||'';
     const mc = WB_METHOD_COLORS&&WB_METHOD_COLORS[item.method];
     const cardBg = mc ? mc.bg : '#f8fafc';
     const cardColor = mc ? mc.text : '#475569';
-    return {item, totalMins, startTime, endTime, detail, cardBg, cardColor, i};
+    return {item, totalMins, startTimeLabel, endTimeLabel, detail, cardBg, cardColor, i};
   });
 
-  container.innerHTML = rows.map(({item,totalMins,startTime,endTime,detail,cardBg,cardColor,i})=>`
+  container.innerHTML = rows.map(({item,totalMins,startTimeLabel,endTimeLabel,detail,cardBg,cardColor,i})=>`
     <div style="background:${cardBg};border-radius:9px;padding:9px 11px;border:1px solid #e2e8f0;position:relative">
       <div style="display:flex;justify-content:space-between;align-items:flex-start">
         <div>
@@ -4152,7 +4535,7 @@ function rtRenderQueue(){
         </div>
         <button onclick="rtRemove(${item.id})" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:.8rem;padding:0">×</button>
       </div>
-      <div style="font-size:.72rem;color:#475569;margin-top:2px">${item.method||'—'} · ${item.num_samples} samples${detail?` (${detail})`:''}
+      <div style="font-size:.72rem;color:#475569;margin-top:2px">${item.method||'—'} · ${item.num_samples} smp + 1 blank${detail?` (${detail})`:''}
       </div>
       ${totalMins ? `
       <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
@@ -4161,22 +4544,36 @@ function rtRenderQueue(){
         </div>
         <span style="font-size:.72rem;font-weight:700;color:${cardColor};white-space:nowrap">${totalMins>=60?Math.floor(totalMins/60)+'h'+(totalMins%60?totalMins%60+'m':''):totalMins+'m'}</span>
       </div>
-      <div style="font-size:.68rem;color:#64748b;margin-top:3px">🕐 ${startTime} → ${endTime}</div>
+      <div style="font-size:.68rem;color:#64748b;margin-top:3px">🕐 ${startTimeLabel} → ${endTimeLabel}</div>
       ` : `<div style="font-size:.68rem;color:#f59e0b;margin-top:4px">⚠️ Method run time not configured</div>`}
     </div>
   `).join('');
 
-  // Summary
+  // Summary — recalculate cleanly from scratch for total
   const totalMin = rows.reduce((s,r)=>s+r.totalMins,0);
-  const finishTime = minsToTime(startH*60+startM+totalMin);
+  const totalDays = Math.floor((startH*60+startM+totalMin)/1440);
+  const finishDayI = (startDayI + totalDays) % 7;
+  const finishTimeMins = (startH*60+startM+totalMin) % 1440;
+  const fH = Math.floor(finishTimeMins/60), fM = finishTimeMins%60;
+  const finishLabel = `${DAYS[finishDayI]} ${String(fH).padStart(2,'0')}:${String(fM).padStart(2,'0')}`;
+  const startLabel  = `${DAYS[startDayI]} ${startVal}`;
+
   if(summary) summary.style.display = '';
   if(sumContent) sumContent.innerHTML = `
-    <div>📅 Start: <b>${startVal}</b></div>
-    <div>🏁 Finish: <b>${finishTime}</b></div>
+    <div>📅 Start: <b>${startLabel}</b></div>
+    <div>🏁 Finish: <b>${finishLabel}</b></div>
     <div>⏱ Total run time: <b>${totalMin>=60?Math.floor(totalMin/60)+'h '+(totalMin%60?totalMin%60+'m':''):totalMin+'m'}</b></div>
     <div>📁 Projects: <b>${rtQueue.length}</b></div>
     <div style="margin-top:6px;font-size:.7rem;color:#64748b">Note: no buffer time between runs included</div>
   `;
+}
+
+function minsToTimeWithDay(mins, dayOffset, startDayIdx, DAYS){
+  const totalMinsFromMidnight = mins; // already normalised
+  const h = Math.floor(totalMinsFromMidnight/60)%24;
+  const m = totalMinsFromMidnight%60;
+  const dayLabel = DAYS[(startDayIdx + dayOffset) % 7];
+  return `${dayLabel} ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
 }
 
 function minsToTime(totalMins){
@@ -4190,12 +4587,12 @@ let ttDetailTaskId = null;
 
 function openTTDetail(taskId, event){
   event.stopPropagation();
-  ttDetailTaskId = parseInt(taskId); // always numeric — Firebase may stringify
-  const t = ttTasks.find(x=>parseInt(x.id)===ttDetailTaskId);
+  ttDetailTaskId = taskId;
+  const t = ttTasks.find(x=>x.id===taskId);
   if(!t) return;
 
-  const isOwnTask = currentUser && t && t.person === currentUser.timetable_id;
-  const canEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || isOwnTask;
+  const myRow = ttGetMyRow();
+  const canEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || (myRow && t.person === myRow);
   const projs = (D.projects||[]);
   const projIds = t.project_ids||[];
   const linkedProjs = projIds.map(id=>projs.find(p=>p.id===id)).filter(Boolean);
@@ -4228,10 +4625,7 @@ function openTTDetail(taskId, event){
   }
 
   if(t.needs_stat) body += `<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:7px;padding:5px 9px;color:#b91c1c;font-size:.73rem;font-weight:600">🔴 Statistical analysis required</div>`;
-  if(t.is_background){
-    const recurLabel = (t.recurring==='forever'||t.recurring===true) ? '🔁 Repeats every week' : t.recurring==='week' ? '🔁 Repeats this week only' : '⬜ One-time background task';
-    body += `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:5px 9px;color:#64748b;font-size:.73rem;font-style:italic">${recurLabel}</div>`;
-  }
+  if(t.is_background) body += `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:5px 9px;color:#64748b;font-size:.73rem;font-style:italic">Background / long-term task</div>`;
   if(t.desc) body += `<div><span style="color:#64748b;font-size:.72rem">📝 Notes</span><br>${t.desc}</div>`;
 
   body += '</div>';
@@ -4239,19 +4633,6 @@ function openTTDetail(taskId, event){
 
   const footer = document.getElementById('ttDetailFooter');
   if(footer) footer.style.display = canEdit ? 'flex' : 'none';
-
-  // Show "Delete All" button for any background/recurring task
-  const delAllBtn = document.getElementById('ttDetailDelAllBtn');
-  if(delAllBtn){
-    if(canEdit && (t.is_background || t.recurring || t.repeat_id)){
-      delAllBtn.style.cssText = 'display:inline-flex;padding:6px 10px;background:#7f1d1d;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:.75rem;font-weight:600;align-items:center;gap:4px';
-      delAllBtn.title = (t.recurring==='forever'||t.recurring===true)
-        ? 'Delete this + ALL future copies (stops recurring)'
-        : 'Delete this + all copies this week';
-    } else {
-      delAllBtn.style.display = 'none';
-    }
-  }
 
   // Position popover — ensure it fits in viewport
   const pop = document.getElementById('ttDetailPop');
@@ -4298,100 +4679,17 @@ function ttDetailEdit(){
 }
 function ttDetailDelete(){
   const id = ttDetailTaskId;
-  if(!id) return;
-  const t = ttTasks.find(x=>parseInt(x.id)===parseInt(id));
-  if(!t) return;
-  if(!confirm('Delete just this one task?')) return;
+  if(!id||!confirm('Delete this task?')) return;
   closeTTDetail();
-  ttTasks = ttTasks.filter(x=>parseInt(x.id)!==parseInt(id));
+  ttTasks = ttTasks.filter(t=>t.id!==id);
   saveTTTasks();
   renderTimetable();
   toast('Task deleted');
 }
 
-function ttDetailDeleteAll(){
-  const id = ttDetailTaskId;
-  if(!id) return;
-  const t = ttTasks.find(x=>parseInt(x.id)===parseInt(id));
-  if(!t) return;
-  const isForever = t.recurring==='forever' || t.recurring===true;
-  const label = isForever
-    ? 'Delete this task AND all future repeating copies? (This will stop it from recurring)'
-    : 'Delete this task AND all its copies this week?';
-  if(!confirm(label)) return;
-  closeTTDetail();
-
-  if(t.repeat_id){
-    // Delete all tasks sharing this repeat_id
-    const count = ttTasks.filter(x=>x.repeat_id===t.repeat_id).length;
-    ttTasks = ttTasks.filter(x=>x.repeat_id!==t.repeat_id);
-    saveTTTasks();
-    renderTimetable();
-    toast(`🗑 Deleted ${count} task${count!==1?'s':''} (all copies removed)`);
-  } else {
-    // Fallback: match by person + type + project_ids (for old tasks without repeat_id)
-    const projKey = (t.project_ids||[]).slice().sort().join(',');
-    const ws = ttWeekStart || weekMonday(new Date());
-    const wStart = isoDate(ws);
-    const wEndD = new Date(ws); wEndD.setDate(wEndD.getDate()+6);
-    const wEnd = isoDate(wEndD);
-    const count = ttTasks.filter(x=>
-      x.person===t.person && x.type===t.type && x.is_background &&
-      (x.project_ids||[]).slice().sort().join(',')===projKey &&
-      (isForever || (x.date>=wStart && x.date<=wEnd))
-    ).length;
-    ttTasks = ttTasks.filter(x=>!(
-      x.person===t.person && x.type===t.type && x.is_background &&
-      (x.project_ids||[]).slice().sort().join(',')===projKey &&
-      (isForever || (x.date>=wStart && x.date<=wEnd))
-    ));
-    saveTTTasks();
-    renderTimetable();
-    toast(`🗑 Deleted ${count} task${count!==1?'s':''} (all matched copies removed)`);
-  }
-}
-
-function ttInjectRecurringTasks(){
-  if(!ttTasks) return;
-  const ws = ttWeekStart || weekMonday(new Date());
-  const weekDates = [];
-  for(let i=0;i<7;i++){
-    const d = new Date(ws); d.setDate(d.getDate()+i);
-    weekDates.push(isoDate(d));
-  }
-  // Only inject 'forever' recurring tasks — 'week' scope tasks are injected at save time
-  const recurring = ttTasks.filter(t=>t.recurring==='forever' && t.is_background);
-  let added = 0;
-  recurring.forEach(template=>{
-    const srcDate = new Date(template.date+'T00:00:00');
-    const dow = (srcDate.getDay()+6)%7;
-    const targetDate = weekDates[dow];
-    if(!targetDate) return;
-    const projKey = (template.project_ids||[]).slice().sort().join(',');
-    const exists = ttTasks.some(t=>
-      t.date===targetDate &&
-      t.person===template.person &&
-      t.type===template.type &&
-      t.is_background &&
-      (t.project_ids||[]).slice().sort().join(',')===projKey
-    );
-    if(!exists){
-      ttTasks.push({
-        ...template,
-        id: ttNextId(),
-        date: targetDate,
-        repeat_id: template.repeat_id || ('R'+template.id)
-      });
-      added++;
-    }
-  });
-  if(added>0){ saveTTTasks(); }
-}
-
 function renderTimetable(){
   if(!ttTasks) ttTasks = loadTTTasks();
   if(!ttWeekStart) ttWeekStart = weekMonday(new Date());
-  ttInjectRecurringTasks();
 
   const myRow = ttGetMyRow();
 
@@ -4487,15 +4785,16 @@ function renderTimetable(){
       const isWkend = di>=5;
       const isToday = ds===todayStr;
       const tasks = ttTasks.filter(t=>t.person===row.id && t.date===ds)
-        .sort((a,b)=> (b.is_background?1:0) - (a.is_background?1:0)); // background first
+                           .sort((a,b)=>(b.is_background?1:0)-(a.is_background?1:0)); // background tasks always first
 
       let cellCls = 'tt-day';
       if(isWkend) cellCls += ' weekend';
       if(isToday) cellCls += ' today';
 
-      const canAddEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || isMyRow; // interns can edit their own row via isMyRow
+      // Interns can edit tasks on their own row
+      const canAddEdit = (currentUser && ['admin','manager','ops'].includes(currentUser.role)) || isMyRow;
       let chips = tasks.map(t=>{
-        const projIds = t.project_ids||[];
+        const projIds = Array.isArray(t.project_ids)?t.project_ids.map(Number):Object.values(t.project_ids||{}).map(Number);
         const projs = (D&&D.projects)||[];
 
         // Get method from first project
@@ -4525,15 +4824,13 @@ function renderTimetable(){
 
         // Background task styling
         const bgClass = t.is_background ? ' bg-task' : '';
-        const recurringBadge = t.recurring ? `<span title="Recurring every week" style="font-size:.58rem;margin-left:3px;opacity:.7">🔁</span>` : '';
 
-        const editAttr = `onclick="openTTDetail(${t.id},event);event.stopPropagation()"`;
+        const editAttr = `onclick="openTTDetail(${t.id},event)"`;
         const dragAttrs = canAddEdit ? `draggable="true" ondragstart="ttDragStart(event,${t.id})" ondragend="this.style.opacity='1'"` : '';
 
-        return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}${bgClass}"${methodAttr} ${editAttr} ${dragAttrs} style="position:relative">${typeShort} ${projIds.length?'':t.desc||''}${recurringBadge||''}${statBadge}${projTags}</span>`;
+        return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}${bgClass}"${methodAttr} ${editAttr} ${dragAttrs} style="position:relative">${typeShort} ${projIds.length?'':t.desc||''}${statBadge}${projTags}</span>`;
       }).join('');
       if(canAddEdit) chips += `<span class="tt-add-btn" onclick="openTTModal('${row.id}','${ds}')" title="Add task">＋</span>`;
-      if(canAddEdit && tasks.length) chips += `<span class="tt-add-btn" onclick="ttOpenCopyDay('${row.id}','${ds}',event)" title="Copy ${row.label}'s tasks from this day to other days" style="color:#1F4E79">📋</span>`;
 
       const dropAttrs = canAddEdit ? `ondragover="ttDragOver(event)" ondrop="ttDrop(event,'${row.id}','${ds}')" ondragleave="ttDragLeave(event)"` : '';
       html += `<td class="${cellCls}" ${dropAttrs}>${chips}</td>`;
@@ -4550,23 +4847,17 @@ function renderTimetable(){
     return d>=days[0] && d<=days[6];
   });
 
-  // Tasks by type — count UNIQUE PROJECTS per task type
-  // e.g. P557 run by 2 people = 1 project doing acq, not 2 tasks
-  // "LC-MS Acquisition: 7" means 7 distinct projects had acq tasks this week
+  // Tasks by type — deduplicated by type+projects (multiple people on same task = 1)
+  const taskKeysSeen = new Set();
   const byType = {};
-  const projsByType = {}; // type -> Set of project ids
   weekTasks.forEach(t=>{
-    const ids = t.project_ids||[];
-    if(!projsByType[t.type]) projsByType[t.type] = new Set();
-    if(ids.length){
-      ids.forEach(id => projsByType[t.type].add(id));
-    } else {
-      // Task with no project linked — count it as a unique "no-project" entry per type+date+person
-      projsByType[t.type].add('noproj|'+t.date+'|'+t.person);
+    const key = t.type + '|' + (t.project_ids||[]).slice().sort().join(',');
+    if(!taskKeysSeen.has(key)){
+      taskKeysSeen.add(key);
+      byType[t.type]=(byType[t.type]||0)+1;
     }
   });
-  Object.entries(projsByType).forEach(([type, set])=>{ byType[type] = set.size; });
-  const uniqueTaskCount = Object.values(byType).reduce((a,b)=>a+b, 0);
+  const uniqueTaskCount = taskKeysSeen.size;
 
   // Unique projects touched this week
   const allProjIdsThisWeek = [...new Set(weekTasks.flatMap(t=>t.project_ids||[]))];
@@ -4786,14 +5077,14 @@ function ttCalcRunTime(ids){
     const method = p.method||'';
     const minsPerSamp = RUN_TIME[method]||0;
     if(!minsPerSamp){ rows.push(`P${p.project_no}: method "${method}" — run time not configured`); return; }
-    const total = samp * minsPerSamp;
+    const total = (samp + 1) * minsPerSamp; // +1 blank
     totalMins += total;
     const hrs = Math.floor(total/60), mins = total%60;
     let detail_str = '';
     if(method==='Metabolomics'||method==='Lipidomics'){
       detail_str = ` (${samp} smp × 20min × 2 modes = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''})`;
     } else {
-      detail_str = ` (${samp} smp × ${minsPerSamp}min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''})`;
+      detail_str = ` (${samp}+1 blank × ${minsPerSamp}min = ${hrs>0?hrs+'h ':''}${mins>0?mins+'m':''})`;
     }
     rows.push(`<b>P${p.project_no}</b> ${method}${detail_str}`);
   });
@@ -4849,8 +5140,6 @@ function openTTModal(person='', date=''){
   const rbox=document.getElementById('tt_runtime_box'); if(rbox) rbox.style.display='none';
   const statEl=document.getElementById('ttNeedsStat'); if(statEl) statEl.checked=false;
   const bgEl=document.getElementById('ttIsBackground'); if(bgEl) bgEl.checked=false;
-  const recWeekEl=document.getElementById('ttRecurWeek'); if(recWeekEl) recWeekEl.checked=true;
-  const recWrap=document.getElementById('ttRecurringWrap'); if(recWrap) recWrap.style.display='none';
   document.getElementById('ttMov').classList.add('open');
 }
 
@@ -4879,91 +5168,13 @@ function editTTTask(id){
   document.getElementById('ttDelBtn').style.display='inline-flex';
   const statEl2=document.getElementById('ttNeedsStat'); if(statEl2) statEl2.checked=!!(t.needs_stat);
   const bgEl2=document.getElementById('ttIsBackground'); if(bgEl2) bgEl2.checked=!!(t.is_background);
-  const recWrap2=document.getElementById('ttRecurringWrap'); if(recWrap2) recWrap2.style.display=t.is_background?'flex':'none';
-  if(t.recurring==='forever'||t.recurring===true){ const el=document.getElementById('ttRecurForever'); if(el) el.checked=true; }
-  else { const el=document.getElementById('ttRecurWeek'); if(el) el.checked=true; }
   document.getElementById('ttMov').classList.add('open');
-}
-
-// ── COPY DAY (per person) ────────────────────────────────────────
-let ttCopyDaySource = null; // { personId, dateStr }
-
-function ttOpenCopyDay(personId, dateStr, event){
-  if(event) event.stopPropagation();
-  ttCopyDaySource = { personId, dateStr };
-  if(!ttTasks) ttTasks = loadTTTasks();
-
-  const srcTasks = ttTasks.filter(t=>t.person===personId && t.date===dateStr);
-  if(!srcTasks.length){ toast('No tasks on this cell to copy'); return; }
-
-  const personRows = getTTPersonRows();
-  const instrRows = TEAM_ROWS.filter(r=>r.type==='instrument');
-  const allRows = [...personRows, ...instrRows];
-  const row = allRows.find(r=>r.id===personId);
-  const personLabel = row ? row.label : personId;
-
-  const ws = ttWeekStart || weekMonday(new Date());
-  const days = [];
-  for(let i=0;i<7;i++){
-    const d = new Date(ws); d.setDate(d.getDate()+i); days.push(d);
-  }
-
-  const srcDate = new Date(dateStr+'T00:00:00');
-  const fmtDay = d => d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
-
-  document.getElementById('ttCopyDayTitle').textContent = `📋 Copy ${personLabel}'s Tasks`;
-  document.getElementById('ttCopyDayFrom').textContent = fmtDay(srcDate) + ` — ${srcTasks.length} task${srcTasks.length!==1?'s':''}`;
-
-  let html = '';
-  days.forEach(d=>{
-    const ds = isoDate(d);
-    if(ds===dateStr) return;
-    const existing = ttTasks.filter(t=>t.person===personId && t.date===ds).length;
-    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:1.5px solid #e2e8f0;cursor:pointer;font-size:.82rem;font-weight:500;color:#1e293b"
-      onmouseover="this.style.borderColor='#1F4E79'" onmouseout="this.style.borderColor=this.querySelector('input').checked?'#1F4E79':'#e2e8f0'">
-      <input type="checkbox" value="${ds}" style="accent-color:#1F4E79;width:15px;height:15px" onchange="this.parentElement.style.borderColor=this.checked?'#1F4E79':'#e2e8f0'">
-      <span style="flex:1">${fmtDay(d)}</span>
-      ${existing ? `<span style="font-size:.68rem;color:#94a3b8">${existing} task${existing!==1?'s':''} already</span>` : '<span style="font-size:.68rem;color:#bbf7d0;background:#f0fdf4;padding:1px 6px;border-radius:6px">empty</span>'}
-    </label>`;
-  });
-  document.getElementById('ttCopyDayTargets').innerHTML = html;
-  document.getElementById('ttCopyDayOv').classList.add('open');
-}
-
-function ttExecuteCopyDay(){
-  if(!ttCopyDaySource) return;
-  const { personId, dateStr } = ttCopyDaySource;
-  const checked = [...document.querySelectorAll('#ttCopyDayTargets input:checked')].map(el=>el.value);
-  if(!checked.length){ toast('Select at least one target day'); return; }
-
-  const srcTasks = ttTasks.filter(t=>t.person===personId && t.date===dateStr);
-  let copied = 0, skipped = 0;
-
-  checked.forEach(targetDate=>{
-    srcTasks.forEach(src=>{
-      const projKey = (src.project_ids||[]).slice().sort().join(',');
-      const isDup = ttTasks.some(t=>
-        t.date===targetDate && t.person===personId &&
-        t.type===src.type &&
-        (t.project_ids||[]).slice().sort().join(',')===projKey
-      );
-      if(isDup){ skipped++; return; }
-      ttTasks.push({ ...src, id: ttNextId(), date: targetDate });
-      copied++;
-    });
-  });
-
-  saveTTTasks();
-  cm('ttCopyDayOv');
-  renderTimetable();
-  const skipNote = skipped ? ` (${skipped} duplicate${skipped!==1?'s':''} skipped)` : '';
-  toast(`✅ Copied ${copied} task${copied!==1?'s':''}${skipNote} to ${checked.length} day${checked.length!==1?'s':''}`);
 }
 
 function delTTTask(){
   const id=parseInt(document.getElementById('ttEditId').value);
   if(!id||!confirm('Delete this task?'))return;
-  ttTasks=ttTasks.filter(t=>parseInt(t.id)!==id);
+  ttTasks=ttTasks.filter(t=>t.id!==id);
   saveTTTasks();
   cm('ttMov');
   renderTimetable();
@@ -4985,35 +5196,13 @@ function saveTTTask(){
     const projPart=project_ids.map(id2=>{ const p=projs.find(x=>x.id===id2); return p?`P${p.project_no}`:''}).filter(Boolean).join(', ');
     desc=typeLabel?`${typeLabel} ${projPart}`:projPart;
   }
-  const is_background = !!(document.getElementById('ttIsBackground')?.checked);
-  const recurScope = is_background ? (document.querySelector('input[name="ttRecurScope"]:checked')?.value||'none') : 'none';
-  const recurring = recurScope !== 'none' ? recurScope : false; // 'week', 'forever', or false
-  const needs_stat = !!(document.getElementById('ttNeedsStat')?.checked);
-  const is_bg_old = id ? (ttTasks.find(t=>t.id===parseInt(id))||{}).is_background : false;
   if(!date){toast('Date is required');return;}
   if(!desc&&!project_ids.length){toast('Add at least one project or a description');return;}
-  // For recurring tasks, generate a repeat_id to link all copies
-  const existingTask = id ? ttTasks.find(t=>t.id===parseInt(id)) : null;
-  const repeat_id = recurring ? (existingTask?.repeat_id || ('R'+Date.now())) : null;
   if(id){
     const i=ttTasks.findIndex(t=>t.id===parseInt(id));
-    if(i>=0) ttTasks[i]={...ttTasks[i],person,date,type,desc,project_ids,is_background,recurring,needs_stat,repeat_id};
+    if(i>=0) ttTasks[i]={...ttTasks[i],person,date,type,desc,project_ids};
   } else {
-    ttTasks.push({id:ttNextId(),person,date,type,desc,project_ids,is_background,recurring,needs_stat,repeat_id});
-    // For 'week' scope, inject across all days of the current week immediately
-    if(recurring==='week'){
-      const ws = ttWeekStart || weekMonday(new Date());
-      const weekDates=[];
-      for(let i=0;i<7;i++){ const d=new Date(ws); d.setDate(d.getDate()+i); weekDates.push(isoDate(d)); }
-      const srcDow = (new Date(date+'T00:00:00').getDay()+6)%7;
-      const template = ttTasks[ttTasks.length-1];
-      weekDates.forEach(wd=>{
-        if(wd===date) return; // skip source day
-        const projKey=(project_ids||[]).slice().sort().join(',');
-        const dup=ttTasks.some(t=>t.date===wd&&t.person===person&&t.type===type&&t.is_background&&(t.project_ids||[]).slice().sort().join(',')===projKey);
-        if(!dup) ttTasks.push({...template,id:ttNextId(),date:wd,repeat_id});
-      });
-    }
+    ttTasks.push({id:ttNextId(),person,date,type,desc,project_ids});
   }
   saveTTTasks();
   cm('ttMov');
