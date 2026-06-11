@@ -741,8 +741,8 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
     <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
       <label style="font-size:.75rem;color:#64748b">Show:</label>
       <select id="psFilter" onchange="renderProjStatus()" style="padding:5px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.78rem">
-        <option value="week">Projects active this week</option>
         <option value="all">All active projects (2026)</option>
+        <option value="week">Projects active this week</option>
       </select>
     </div>
   </div>
@@ -3931,8 +3931,8 @@ function renderProjStatus(){
   if(!projects.length){
     grid.innerHTML = `<div style="text-align:center;padding:40px;color:#94a3b8">
       <div style="font-size:2rem;margin-bottom:8px">📋</div>
-      <div style="font-weight:600">No active projects this week</div>
-      <div style="font-size:.8rem;margin-top:4px">Navigate to another week or switch to "All active projects"</div>
+      <div style="font-weight:600">${filter==='week'?'No projects linked to timetable tasks this week':'No active projects found'}</div>
+      <div style="font-size:.8rem;margin-top:4px">${filter==='week'?'Make sure timetable tasks have project codes attached (P-tags), or switch to "All active projects"':'No active 2026 projects found in work status'}</div>
     </div>`;
     return;
   }
