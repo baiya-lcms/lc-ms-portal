@@ -431,7 +431,7 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
   <div class="tab" id="tabUsers" onclick="sw('users',this)">👤 Users</div>
   <div class="tab" id="tabTimetable" onclick="sw('timetable',this);renderTimetable()">📅 Timetable</div>
   <div class="tab" id="tabPlanning" onclick="sw('planning',this);renderPlanning()">📆 Planning</div>
-  <div class="tab" id="tabProjStatus" onclick="sw('projstatus',this);renderProjStatus()">🔬 Project Progress</div>
+  <div class="tab" id="tabProjStatus" onclick="sw('projstatus',this);if(!ttTasks){ttTasks=loadTTTasks();}renderProjStatus()">🔬 Project Progress</div>
 </div>
 
 <div class="main">
@@ -1981,7 +1981,7 @@ async function initDashboard(){
       ttTasks = fbArr(ttSnap.val()).map(normTTask||((t)=>t));
       console.log('Timetable loaded:', ttTasks.length, 'tasks');
       // If Project Progress tab is open, refresh it now that ttTasks has arrived
-      if(document.getElementById('v-projstatus')?.style.display !== 'none') renderProjStatus();
+      if(document.getElementById('v-projstatus')?.classList.contains('active')) renderProjStatus();
     }
     else { console.warn('No timetable data in Firebase'); ttTasks = loadTTTasks(); }
     const wbSnap = await fbDB.ref('lcms/wbcards').get();
@@ -2007,7 +2007,7 @@ async function initDashboard(){
     ttTasks = arr;
     localStorage.setItem('lcms_timetable', JSON.stringify(ttTasks));
     renderTimetable();
-    if(document.getElementById('v-projstatus')?.style.display !== 'none') renderProjStatus();
+    if(document.getElementById('v-projstatus')?.classList.contains('active')) renderProjStatus();
   });
   // Load planning data
   loadPlanData();
@@ -2060,7 +2060,7 @@ function renderAll(){
   renderDash(); renderFinancial(); renderClients(); renderProjTable(); renderStatusGroups();
   renderFollowup(); renderInquiryNew();
   // Re-render Project Progress if that tab is currently visible
-  if(document.getElementById('v-projstatus')?.style.display !== 'none') renderProjStatus();
+  if(document.getElementById('v-projstatus')?.classList.contains('active')) renderProjStatus();
   document.getElementById('cliB').textContent = D.clients.length;
   document.getElementById('projB').textContent = D.projects.length;
   const UNPAID_STATUSES=['Discussing','รอชำระ งวด 2/2','Payment completed 1/2','Payment completed  งวด1/2','หนี้สูญ / ลูกค้าไม่ชำระเงิน'];
