@@ -3842,7 +3842,10 @@ function inferTimelineFromTimetable(projId){
   // Furthest step seen = the most advanced one
   const furthestIdx = Math.max(...seenIds.map(s=>PS_STEP_ORDER.indexOf(s)));
 
-  const tl = getTimeline(projId);
+  // Access D.timelines directly to avoid infinite loop with getTimeline()
+  if(!D.timelines) D.timelines={};
+  if(!D.timelines[projId]){D.timelines[projId]={steps:{}};PS_STEPS.forEach(s=>{D.timelines[projId].steps[s.id]={status:"pending",assignees:[]};});}
+  const tl = D.timelines[projId];
   PS_STEP_ORDER.forEach((sid, idx)=>{
     if(!tl.steps[sid]) tl.steps[sid] = {status:'pending', assignees:[]};
     if(idx < furthestIdx){
@@ -3863,11 +3866,13 @@ function getTimeline(projId){
     D.timelines[projId] = { steps:{}, _autoInferred: false };
     PS_STEPS.forEach(s=>{ D.timelines[projId].steps[s.id] = {status:'pending', assignees:[]}; });
   }
-  // Auto-infer from timetable if this project has never been manually set
   const tl = D.timelines[projId];
+  // Auto-infer from timetable only if never manually set AND not currently inferring (prevents infinite loop)
   const allPending = PS_STEPS.every(s=>(tl.steps[s.id]||{}).status==='pending');
-  if(allPending && !tl._manuallyEdited){
+  if(allPending && !tl._manuallyEdited && !tl._inferring){
+    tl._inferring = true;
     inferTimelineFromTimetable(projId);
+    tl._inferring = false;
   }
   return D.timelines[projId];
 }
