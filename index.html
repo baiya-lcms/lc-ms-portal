@@ -741,8 +741,8 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
     <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
       <label style="font-size:.75rem;color:#64748b">Show:</label>
       <select id="psFilter" onchange="renderProjStatus()" style="padding:5px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.78rem">
-        <option value="all">All active projects (2026)</option>
         <option value="week">Projects active this week</option>
+        <option value="all">All active projects (2026)</option>
       </select>
     </div>
   </div>
@@ -753,6 +753,7 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
     <span style="font-size:.68rem;color:#94a3b8;margin-left:4px">Click a step to assign/unassign people</span>
   </div>
   <div id="psGrid"></div>
+  <div id="psDebug" style="font-size:.68rem;color:#94a3b8;padding:6px 10px;background:#f8fafc;border-radius:6px;margin-top:8px;font-family:monospace"></div>
 </div>
 
 <!-- Project step assign popover -->
@@ -3800,12 +3801,12 @@ let psWeekStart = null;
 let psPopoverCtx = null; // { projectId, stepId }
 
 function psNav(dir){
-  if(!psWeekStart) psWeekStart = weekMonday(new Date());
-  psWeekStart = new Date(psWeekStart);
-  psWeekStart.setDate(psWeekStart.getDate() + dir*7);
+  if(!ttWeekStart) ttWeekStart = weekMonday(new Date());
+  ttWeekStart = new Date(ttWeekStart);
+  ttWeekStart.setDate(ttWeekStart.getDate() + dir*7);
   renderProjStatus();
 }
-function psNavToday(){ psWeekStart = weekMonday(new Date()); renderProjStatus(); }
+function psNavToday(){ ttWeekStart = weekMonday(new Date()); renderProjStatus(); }
 
 // Maps timetable task types → pipeline step IDs
 const TT_TYPE_TO_PS_STEP = {
@@ -3886,11 +3887,9 @@ function normTTask(t){
 }
 
 function renderProjStatus(){
-  // Ensure ttTasks is loaded (may be null if Firebase hasn't responded yet)
   if(!ttTasks){ ttTasks = loadTTTasks(); }
-  // Normalise all tasks
   if(Array.isArray(ttTasks)) ttTasks.forEach(normTTask);
-  if(!psWeekStart) psWeekStart = ttWeekStart || weekMonday(new Date());
+  if(!ttWeekStart) ttWeekStart = weekMonday(new Date());
 
   const filter = (document.getElementById('psFilter')||{value:'week'}).value;
   let projects = [];
@@ -3906,19 +3905,30 @@ function renderProjStatus(){
   }
 
   if(filter === 'week'){
-    const wEnd = new Date(psWeekStart); wEnd.setDate(wEnd.getDate()+6);
-    const startStr = isoDate(psWeekStart);
-    const endStr   = isoDate(wEnd);
+    if(!ttWeekStart) ttWeekStart = weekMonday(new Date());
+    // Generate the exact same 7 date strings the timetable uses for column headers
+    const weekDates = new Set();
+    for(let i=0;i<7;i++){
+      weekDates.add(isoDate(new Date(ttWeekStart.getTime() + i*86400000)));
+    }
     const wl = document.getElementById('psWeekLabel');
     if(wl){
       const fmt = d=>d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-      wl.textContent = `Week of ${fmt(psWeekStart)} – ${fmt(wEnd)}`;
+      const wEnd = new Date(ttWeekStart.getTime() + 6*86400000);
+      wl.textContent = `Week of ${fmt(ttWeekStart)} – ${fmt(wEnd)}`;
     }
     const weekProjIds = new Set(
-      (ttTasks||[]).filter(t=> t.date >= startStr && t.date <= endStr)
-                   .flatMap(t=>(Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number))
+      (ttTasks||[])
+        .filter(t => weekDates.has(t.date))
+        .flatMap(t=>(Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number))
+        .filter(id => id > 0)
     );
     projects = [...weekProjIds].map(id=>(D.projects||[]).find(p=>Number(p.id)===id)).filter(Boolean);
+
+    // Debug info — helps diagnose blank weeks
+    const tasksThisWeek = (ttTasks||[]).filter(t=>weekDates.has(t.date));
+    const dbg = document.getElementById('psDebug');
+    if(dbg) dbg.textContent = `[debug] ttTasks loaded: ${(ttTasks||[]).length} | week: ${[...weekDates][0]}→${[...weekDates][6]} | tasks in week: ${tasksThisWeek.length} | with project_ids: ${tasksThisWeek.filter(t=>(t.project_ids||[]).length>0).length} | projects found: ${projects.length} | D.projects: ${(D.projects||[]).length}`;
   } else {
     const wl = document.getElementById('psWeekLabel');
     if(wl) wl.textContent = 'All active projects (2026)';
