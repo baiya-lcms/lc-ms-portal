@@ -3811,7 +3811,7 @@ function psNavToday(){ ttWeekStart = weekMonday(new Date()); renderProjStatus();
 // Maps timetable task types → pipeline step IDs
 const TT_TYPE_TO_PS_STEP = {
   'prep':     'sample_prep',
-  'acq':      'lc_ms_acq',
+  // 'acq' intentionally excluded — LC-MS acquisition runs don't need tracking in progress tab
   'data':     'data_analysis',
   'revision': 'client_report',
   'method':   'protocol',
