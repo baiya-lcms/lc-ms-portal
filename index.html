@@ -249,6 +249,36 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .wb-add-btn{width:100%;padding:7px;border:1.5px dashed #cbd5e1;border-radius:8px;background:none;cursor:pointer;font-size:.75rem;color:#94a3b8;margin-top:2px;transition:all .15s}
 .wb-add-btn:hover{border-color:#1F4E79;color:#1F4E79;background:#f0f9ff}
 .wb-card-actions{display:flex;gap:4px;justify-content:flex-end;margin-top:4px}
+/* ── Data Analysis Board ──────────────────────────────────────────── */
+.da-board{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:6px}
+@media(max-width:1100px){.da-board{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.da-board{grid-template-columns:1fr}}
+.da-col{background:#f8fafc;border-radius:12px;padding:10px;min-height:140px}
+.da-col-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid}
+.da-col-hdr .da-title{font-size:.76rem;font-weight:700;line-height:1.3}
+.da-col-hdr .da-cnt{font-size:.7rem;font-weight:700;background:rgba(0,0,0,.08);padding:1px 7px;border-radius:10px;flex-shrink:0;margin-left:6px}
+.da-card{background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.07);border:1px solid #e2e8f0;transition:box-shadow .15s}
+.da-card:hover{box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.da-card-title{font-weight:700;font-size:.84rem;color:#1e293b;margin-bottom:6px;cursor:pointer}
+.da-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px}
+.da-tag-user{padding:2px 8px;border-radius:10px;font-size:.65rem;font-weight:700}
+.da-tag-type{padding:2px 8px;border-radius:10px;font-size:.63rem;font-weight:700;border:1px solid}
+.da-mode-pill{display:inline-flex;align-items:center;gap:3px;font-size:.62rem;font-weight:700;padding:2px 7px;border-radius:8px;margin-right:4px}
+.da-card-foot{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.da-expand-btn{font-size:.68rem;color:#1F4E79;background:#f0f6ff;border:1px solid #bcd3ed;border-radius:6px;padding:2px 9px;cursor:pointer}
+.da-expand-btn:hover{background:#dbeafe}
+.da-card-actions{display:flex;gap:4px}
+.da-detail{max-height:0;overflow:hidden;transition:max-height .3s ease;margin-top:0}
+.da-detail.open{max-height:320px;margin-top:8px}
+.da-detail-inner{border-top:1px solid #eef2f6;padding-top:8px}
+.da-mode-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.78rem}
+.da-mode-row select{font-size:.72rem;padding:2px 6px;border:1px solid #e2e8f0;border-radius:6px;flex:1;max-width:140px}
+.da-checklist-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.78rem;cursor:pointer}
+.da-checklist-row input[type=checkbox]{accent-color:#1F4E79;width:15px;height:15px}
+.da-add-btn{width:100%;padding:7px;border:1.5px dashed #cbd5e1;border-radius:8px;background:none;cursor:pointer;font-size:.75rem;color:#94a3b8;margin-top:2px;transition:all .15s}
+.da-add-btn:hover{border-color:#1F4E79;color:#1F4E79;background:#f0f9ff}
+.da-user-chip{padding:3px 10px;border-radius:10px;font-size:.74rem;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:all .15s}
+.da-type-chip{padding:4px 11px;border-radius:10px;font-size:.76rem;font-weight:600;cursor:pointer;border:1.5px solid;transition:all .15s}
 .wb-user-chip{padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:700;cursor:pointer;border:1.5px solid transparent;transition:all .12s;user-select:none}
 .tt-table th{background:#1F4E79;color:#fff;padding:9px 10px;font-size:.7rem;font-weight:700;text-align:center;border:1px solid #17375E;white-space:nowrap}
 .tt-table th.tt-person{background:#17375E;text-align:left;min-width:90px}
@@ -362,6 +392,7 @@ body.role-intern .btn.bl,body.role-intern .btn.bg{display:none!important}
 .plan-collapsed-week{display:none}
 .plan-collapsed-month{min-width:20px;max-width:20px;background:#f0f6ff}
 body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
+body.role-intern #tabDaBoard,body.role-fin #tabDaBoard{display:none!important}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -430,8 +461,9 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
   <div class="tab" id="tabFollowup" onclick="sw('followup',this)">🔔 Follow-Up <span class="bdg bdg-o" id="fuB">0</span></div>
   <div class="tab" id="tabUsers" onclick="sw('users',this)">👤 Users</div>
   <div class="tab" id="tabTimetable" onclick="sw('timetable',this);renderTimetable()">📅 Timetable</div>
-  <div class="tab" id="tabPlanning" onclick="sw('planning',this);renderPlanning()">📆 Planning</div>
   <div class="tab" id="tabProjStatus" onclick="sw('projstatus',this);if(!ttTasks){ttTasks=loadTTTasks();}renderProjStatus()">🔬 Project Progress</div>
+  <div class="tab" id="tabPlanning" onclick="sw('planning',this);renderPlanning()">📆 Planning</div>
+  <div class="tab" id="tabDaBoard" onclick="sw('daboard',this);renderDaBoard()">🧮 Data Analysis Board</div>
 </div>
 
 <div class="main">
@@ -744,6 +776,7 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
         <option value="week">Projects active this week</option>
         <option value="all">All active projects (2026)</option>
       </select>
+      <button class="btn bsm edit-btn" style="background:#1F4E79;color:#fff" onclick="openPsManualAddModal()">+ Add Project</button>
     </div>
   </div>
   <!-- User palette for drag-assign -->
@@ -778,6 +811,30 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
     </div>
   </div>
   <button onclick="closePsPopover()" style="width:100%;margin-top:8px;padding:5px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;font-size:.72rem;color:#64748b">Close</button>
+</div>
+
+<!-- MANUAL ADD PROJECT MODAL (Project Progress tab) -->
+<div class="ov" id="psManualMov">
+  <div class="modal" style="max-width:480px">
+    <div class="mhdr" style="background:#1F4E79;color:#fff;border-radius:14px 14px 0 0">
+      <h3 style="color:#fff">Add Project to Progress View</h3>
+      <button class="mclose" style="color:#fff" onclick="cm('psManualMov')">×</button>
+    </div>
+    <div class="mbody">
+      <div class="fg">
+        <div class="fgrp full">
+          <label>Search by project no. or client name</label>
+          <input id="psManualSearch" placeholder="e.g. 505 or Siripat…" oninput="psManualSearchProjects()" autocomplete="off"
+            style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.82rem">
+          <div id="psManualResults" style="max-height:220px;overflow-y:auto;border:1.5px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;display:none;background:#fff;margin-top:-2px"></div>
+        </div>
+        <div id="psManualPinned" style="font-size:.78rem;color:#64748b"></div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" style="background:#f1f5f9;color:#475569" onclick="cm('psManualMov')">Done</button>
+    </div>
+  </div>
 </div>
 
 <!-- PROJECT SUMMARY MODAL -->
@@ -849,7 +906,6 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
     <span id="ttWeekLabel" style="font-weight:700;color:#1F4E79;font-size:.9rem"></span>
     <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
       <button onclick="toggleRtCalc()" class="btn bsm" style="background:#C55A11;color:#fff">⏱ Run Calculator</button>
-      <button onclick="openCopyDayModal()" class="btn bsm edit-btn" style="background:#166534;color:#fff">📋 Copy Day</button>
       <button id="ttMyBtn" class="btn bsm" style="background:#f1f5f9;color:#475569" onclick="ttToggleMyTasks()">👤 My Tasks</button>
       <select id="ttViewPerson" onchange="renderTimetable()" style="padding:5px 8px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.78rem">
         <option value="">All People</option>
@@ -1333,6 +1389,50 @@ body.role-intern #tabPlanning,body.role-fin #tabPlanning{display:none!important}
     <div class="mfoot">
       <button class="btn" style="background:#f1f5f9;color:#475569" onclick="cm('planMov')">Cancel</button>
       <button class="btn" style="background:#1F4E79;color:#fff" onclick="savePlanRow()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ DATA ANALYSIS BOARD ═══════════ -->
+<div class="view" id="v-daboard">
+  <div class="card">
+    <div class="chdr" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <h3>🧮 Data Analysis Board</h3>
+      <span style="font-size:.75rem;color:#94a3b8">Manually managed — track your own analysis progress and share it with the team</span>
+    </div>
+    <div class="da-board" id="daBoardGrid"></div>
+  </div>
+</div>
+
+<!-- DATA ANALYSIS CARD MODAL -->
+<div class="ov" id="daMov">
+  <div class="modal" style="max-width:480px">
+    <div class="mhdr" id="daMHdr" style="background:#1F4E79;color:#fff;border-radius:14px 14px 0 0">
+      <h3 style="color:#fff" id="daMTitle">Add Card</h3>
+      <button class="mclose" style="color:#fff" onclick="cm('daMov')">×</button>
+    </div>
+    <div class="mbody">
+      <input type="hidden" id="da_id">
+      <input type="hidden" id="da_stage">
+      <div class="fg">
+        <div class="fgrp full">
+          <label>Project / Sample Label</label>
+          <input id="da_title" placeholder="e.g. P591.1, 599.1 (Mon), P467 plasma + urine" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.85rem">
+        </div>
+        <div class="fgrp full">
+          <label>Assignee(s)</label>
+          <div id="da_user_pills" onclick="toggleDaUserPicker()" style="display:flex;flex-wrap:wrap;gap:5px;min-height:32px;padding:5px 8px;border:1.5px solid #e2e8f0;border-radius:8px;cursor:pointer"></div>
+          <div id="da_user_picker" style="display:none;flex-wrap:wrap;gap:5px;margin-top:6px;padding:8px;background:#f8fafc;border-radius:8px"></div>
+        </div>
+        <div class="fgrp full">
+          <label>Type of Analysis</label>
+          <div id="da_type_pills" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="mfoot">
+      <button class="btn" style="background:#f1f5f9;color:#475569" onclick="cm('daMov')">Cancel</button>
+      <button class="btn" id="daSaveBtn" style="background:#1F4E79;color:#fff" onclick="saveDaCard()">💾 Save</button>
     </div>
   </div>
 </div>
@@ -2023,6 +2123,36 @@ async function initDashboard(){
       localStorage.setItem('lcms_plan', JSON.stringify(planData));
     }
   } catch(e){ console.warn('Plan load error:', e.message); }
+  // Load manually-pinned Project Progress projects
+  loadPsManual();
+  try{
+    const psmSnap = await fbDB.ref('lcms/ps_manual').get();
+    if(psmSnap.exists()){
+      const val = psmSnap.val();
+      psManualIds = Array.isArray(val) ? val : Object.values(val||{});
+      localStorage.setItem('lcms_ps_manual', JSON.stringify(psManualIds));
+    }
+  } catch(e){ console.warn('PS manual load error:', e.message); }
+  // Load Data Analysis Board cards
+  daCards = loadDaCards();
+  try{
+    const daSnap = await fbDB.ref('lcms/da_board').get();
+    if(daSnap.exists()){
+      const val = daSnap.val();
+      daCards = Array.isArray(val) ? val : Object.values(val||{});
+      localStorage.setItem('lcms_da_board', JSON.stringify(daCards));
+    }
+  } catch(e){ console.warn('DA board load error:', e.message); }
+  // Live listener — keeps the board in sync across the whole team in real time
+  fbDB.ref('lcms/da_board').on('value', snap=>{
+    if(!snap.exists()) return;
+    const val = snap.val();
+    const arr = Array.isArray(val) ? val : Object.values(val||{});
+    if(JSON.stringify(arr) === JSON.stringify(daCards)) return;
+    daCards = arr;
+    localStorage.setItem('lcms_da_board', JSON.stringify(daCards));
+    if(document.getElementById('v-daboard')?.classList.contains('active')) renderDaBoard();
+  });
   document.getElementById('asof').textContent = `Connected to Firebase · ${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
   buildYearPills('yearPills', y=>{activeYear=y; renderProjTable();});
   buildYearPills('stYearPills', y=>{activeYear=y; renderStatusGroups();});
@@ -3295,7 +3425,7 @@ function ttGoToday(){
   if(document.getElementById('rtCalcPanel')?.style.display==='flex'){ rtLoadQueue(); rtRenderQueue(); }
 }
 
-function openCopyDayModal(){
+function openCopyDayModal(presetRowId, presetDate){
   if(!ttWeekStart) ttWeekStart = weekMonday(new Date());
   const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const fromSel = document.getElementById('copyDayFrom');
@@ -3313,20 +3443,28 @@ function openCopyDayModal(){
     opt.textContent = `${DAYS[i]} ${ds.slice(5)} (${tasksOnDay} task${tasksOnDay!==1?'s':''})`;
     fromSel.appendChild(opt);
   }
+  if(presetDate) fromSel.value = presetDate;
 
   // Default "to" = tomorrow
   const tom = new Date(); tom.setDate(tom.getDate()+1);
   document.getElementById('copyDayTo').value = isoDate(tom);
 
-  // Populate person dropdown
+  // Populate person dropdown — people + TQ/QTOF instrument rows
   const users = loadUsers().filter(u=>u.timetable_id);
   personSel.innerHTML = '<option value="">All people</option>';
+  TEAM_ROWS.forEach(r=>{
+    const opt = document.createElement('option');
+    opt.value = r.id;
+    opt.textContent = `🔬 ${r.label} (instrument)`;
+    personSel.appendChild(opt);
+  });
   users.forEach(u=>{
     const opt = document.createElement('option');
     opt.value = u.timetable_id;
     opt.textContent = u.name;
     personSel.appendChild(opt);
   });
+  if(presetRowId) personSel.value = presetRowId;
 
   // Update preview when selections change
   fromSel.onchange = personSel.onchange = updateCopyDayPreview;
@@ -3788,6 +3926,248 @@ function wbDrop(e, newCol){
   wbDragId = null;
 }
 
+// ── DATA ANALYSIS BOARD ──────────────────────────────────────────────────
+// Manually-managed kanban: analyst tracks own progress, no auto-pull from timetable
+const DA_STAGES = [
+  {id:'upcoming',     label:'Upcoming Data Analysis',      color:'#92400e', bg:'#fef3c7', border:'#fde68a'},
+  {id:'in_progress',  label:'Data Analysis — In Progress', color:'#854d0e', bg:'#fef9c3', border:'#fde047'},
+  {id:'revision_zai', label:'1st Revision — Zai',          color:'#6d28d9', bg:'#f3e8ff', border:'#d8b4fe'},
+  {id:'check_pipob',  label:'Final Check — Pipob',         color:'#166534', bg:'#dcfce7', border:'#86efac'},
+];
+const DA_TYPES = ['Metabolomics','Lipidomics','Proteomics','Peptidomics','Protein Characterization','Quantification','Other'];
+const DA_TYPE_COLORS = {
+  'Metabolomics':              {bg:'#dbeafe',border:'#93c5fd',text:'#1e40af'},
+  'Lipidomics':                {bg:'#d1fae5',border:'#6ee7b7',text:'#065f46'},
+  'Proteomics':                {bg:'#fce7f3',border:'#f9a8d4',text:'#9d174d'},
+  'Peptidomics':                {bg:'#ede9fe',border:'#c4b5fd',text:'#5b21b6'},
+  'Protein Characterization':  {bg:'#ffedd5',border:'#fdba74',text:'#c2410c'},
+  'Quantification':            {bg:'#fef9c3',border:'#fde047',text:'#854d0e'},
+  'Other':                     {bg:'#f1f5f9',border:'#cbd5e1',text:'#475569'},
+};
+const DA_NEEDS_MODES = t => t==='Metabolomics' || t==='Lipidomics';
+
+let daCards = null;
+let daDragId = null;
+let daExpandedIds = new Set();
+let daSelectedUsers = [];
+let daSelectedTypes = [];
+
+function loadDaCards(){
+  const s = localStorage.getItem('lcms_da_board');
+  return s ? JSON.parse(s) : [];
+}
+function saveDaCards(){
+  localStorage.setItem('lcms_da_board', JSON.stringify(daCards||[]));
+  if(fbAuth.currentUser) fbSave('da_board', daCards||[]);
+}
+
+function renderDaBoard(){
+  if(!daCards) daCards = loadDaCards();
+  const grid = document.getElementById('daBoardGrid');
+  if(!grid) return;
+  grid.innerHTML = DA_STAGES.map(stage=>{
+    const cards = daCards.filter(c=>c.stage===stage.id);
+    return `<div class="da-col" style="background:${stage.bg};border:1px solid ${stage.border}" data-stage="${stage.id}"
+      ondragover="daDragOver(event)" ondrop="daDrop(event,'${stage.id}')" ondragleave="daDragLeave(event)">
+      <div class="da-col-hdr" style="border-color:${stage.border}">
+        <div class="da-title" style="color:${stage.color}">${stage.label}</div>
+        <span class="da-cnt" style="color:${stage.color}">${cards.length}</span>
+      </div>
+      ${cards.map(c=>renderDaCard(c)).join('')}
+      <button class="da-add-btn" onclick="openDaModal('${stage.id}')">+ Add card</button>
+    </div>`;
+  }).join('');
+}
+
+function renderDaCard(card){
+  const userTags = (card.assignees||[]).map(u=>{
+    const idx = getUserColorIdx(u);
+    return `<span class="da-tag-user" style="background:${WB_USER_COLORS[idx]};color:${WB_USER_TEXT[idx]}">${u}</span>`;
+  }).join('');
+  const typeTags = (card.types||[]).map(t=>{
+    const tc = DA_TYPE_COLORS[t]||DA_TYPE_COLORS['Other'];
+    return `<span class="da-tag-type" style="background:${tc.bg};color:${tc.text};border-color:${tc.border}">${t}</span>`;
+  }).join('');
+  const showModes = (card.types||[]).some(DA_NEEDS_MODES);
+  const modes = card.modes || {pos:{done:false,by:''},neg:{done:false,by:''}};
+  const modePreview = showModes ? `<div style="margin-top:2px">
+    <span class="da-mode-pill" style="background:${modes.pos?.done?'#dcfce7':'#f1f5f9'};color:${modes.pos?.done?'#166534':'#94a3b8'}">${modes.pos?.done?'✓':'○'} Pos${modes.pos?.done&&modes.pos?.by?' · '+modes.pos.by:''}</span>
+    <span class="da-mode-pill" style="background:${modes.neg?.done?'#dcfce7':'#f1f5f9'};color:${modes.neg?.done?'#166534':'#94a3b8'}">${modes.neg?.done?'✓':'○'} Neg${modes.neg?.done&&modes.neg?.by?' · '+modes.neg.by:''}</span>
+  </div>` : '';
+  const isOpen = daExpandedIds.has(card.id);
+  const usersOptions = loadUsers().filter(u=>u.timetable_id).map(u=>u.name);
+
+  const modeRow = (modeKey, label) => {
+    const m = modes[modeKey] || {done:false, by:''};
+    return `<div class="da-mode-row">
+      <input type="checkbox" ${m.done?'checked':''} onchange="event.stopPropagation();daToggleMode(${card.id},'${modeKey}',this.checked)">
+      <span style="min-width:34px">${label}</span>
+      <select onchange="event.stopPropagation();daSetModeBy(${card.id},'${modeKey}',this.value)" onclick="event.stopPropagation()">
+        <option value="">— who —</option>
+        ${usersOptions.map(u=>`<option value="${u}" ${m.by===u?'selected':''}>${u}</option>`).join('')}
+      </select>
+    </div>`;
+  };
+  const cl = card.checklist || {};
+  const checklistRow = (key, label) => `<div class="da-checklist-row" onclick="event.stopPropagation();daToggleChecklist(${card.id},'${key}')">
+      <input type="checkbox" ${cl[key]?'checked':''} onclick="event.stopPropagation();daToggleChecklist(${card.id},'${key}')">
+      <span>${label}</span>
+    </div>`;
+
+  return `<div class="da-card" draggable="true" ondragstart="daDragStart(event,${card.id})" ondragend="this.style.opacity='1'">
+    <div class="da-card-title" onclick="openDaModal('${card.stage}',${card.id})">${card.title||'—'}</div>
+    ${userTags?`<div class="da-tags">${userTags}</div>`:''}
+    ${typeTags?`<div class="da-tags">${typeTags}</div>`:''}
+    ${modePreview}
+    <div class="da-card-foot">
+      <button class="da-expand-btn" onclick="event.stopPropagation();daToggleExpand(${card.id})">${isOpen?'▲ Hide details':'▼ Details'}</button>
+      <div class="da-card-actions"><button class="bdel edit-btn" onclick="event.stopPropagation();delDaCard(${card.id})">×</button></div>
+    </div>
+    <div class="da-detail ${isOpen?'open':''}" id="da-detail-${card.id}">
+      <div class="da-detail-inner">
+        ${showModes?`<div style="font-weight:700;font-size:.72rem;color:#475569;margin-bottom:2px">Mode completion:</div>${modeRow('pos','Pos')}${modeRow('neg','Neg')}<div style="height:6px"></div>`:''}
+        <div style="font-weight:700;font-size:.72rem;color:#475569;margin-bottom:2px">Checklist:</div>
+        ${checklistRow('excel_filtered','Excel filtering checked')}
+        ${checklistRow('final_excel','Final excel sheet for client done')}
+        ${checklistRow('ppt_done','PowerPoint prepared and checked')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function daToggleExpand(id){
+  if(daExpandedIds.has(id)) daExpandedIds.delete(id);
+  else daExpandedIds.add(id);
+  renderDaBoard();
+}
+
+function daToggleMode(id, modeKey, checked){
+  const card = daCards.find(c=>c.id===id);
+  if(!card) return;
+  if(!card.modes) card.modes = {pos:{done:false,by:''},neg:{done:false,by:''}};
+  if(!card.modes[modeKey]) card.modes[modeKey] = {done:false,by:''};
+  card.modes[modeKey].done = checked;
+  saveDaCards();
+  renderDaBoard();
+}
+function daSetModeBy(id, modeKey, name){
+  const card = daCards.find(c=>c.id===id);
+  if(!card) return;
+  if(!card.modes) card.modes = {pos:{done:false,by:''},neg:{done:false,by:''}};
+  if(!card.modes[modeKey]) card.modes[modeKey] = {done:false,by:''};
+  card.modes[modeKey].by = name;
+  saveDaCards();
+  renderDaBoard();
+}
+function daToggleChecklist(id, key){
+  const card = daCards.find(c=>c.id===id);
+  if(!card) return;
+  if(!card.checklist) card.checklist = {excel_filtered:false,final_excel:false,ppt_done:false};
+  card.checklist[key] = !card.checklist[key];
+  saveDaCards();
+  renderDaBoard();
+}
+
+function daDragStart(e, id){ daDragId=id; e.dataTransfer.effectAllowed='move'; e.currentTarget.style.opacity='0.5'; }
+function daDragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; e.currentTarget.style.outline='2px dashed #2E75B6'; }
+function daDragLeave(e){ e.currentTarget.style.outline=''; }
+function daDrop(e, newStage){
+  e.preventDefault();
+  e.currentTarget.style.outline = '';
+  if(daDragId===null) return;
+  const card = daCards.find(c=>c.id===daDragId);
+  if(card && card.stage !== newStage){
+    card.stage = newStage;
+    saveDaCards();
+    renderDaBoard();
+    toast('Card moved ✓');
+  }
+  daDragId = null;
+}
+
+function openDaModal(stageId, cardId){
+  const card = cardId ? daCards.find(c=>c.id===cardId) : null;
+  document.getElementById('da_id').value = cardId||'';
+  document.getElementById('da_stage').value = stageId;
+  const stage = DA_STAGES.find(s=>s.id===stageId);
+  document.getElementById('daMTitle').textContent = card ? 'Edit Card' : `Add to ${stage?stage.label:stageId}`;
+  document.getElementById('daMHdr').style.background = stage?stage.color:'#1F4E79';
+  document.getElementById('daSaveBtn').style.background = stage?stage.color:'#1F4E79';
+  document.getElementById('da_title').value = card ? (card.title||'') : '';
+  daSelectedUsers = card ? [...(card.assignees||[])] : [];
+  daSelectedTypes = card ? [...(card.types||[])] : [];
+  renderDaUserPicker();
+  renderDaTypePills();
+  document.getElementById('da_user_picker').style.display = 'none';
+  document.getElementById('daMov').classList.add('open');
+}
+
+function renderDaUserPicker(){
+  const allUsers = loadUsers().filter(u=>u.timetable_id).map(u=>u.name);
+  const pillsEl = document.getElementById('da_user_pills');
+  const pickerEl = document.getElementById('da_user_picker');
+  pillsEl.innerHTML = daSelectedUsers.length
+    ? daSelectedUsers.map(u=>{
+        const idx=getUserColorIdx(u);
+        return `<span class="da-user-chip" style="background:${WB_USER_COLORS[idx]};color:${WB_USER_TEXT[idx]}" onclick="event.stopPropagation();toggleDaUser('${u}')">${u} ×</span>`;
+      }).join('')
+    : '<span style="color:#94a3b8;font-size:.75rem">Click to assign team members…</span>';
+  pickerEl.innerHTML = allUsers.map(u=>{
+    const idx=getUserColorIdx(u);
+    const sel=daSelectedUsers.includes(u);
+    return `<span class="da-user-chip" style="background:${sel?WB_USER_COLORS[idx]:'#fff'};color:${sel?WB_USER_TEXT[idx]:'#475569'};border-color:${sel?WB_USER_TEXT[idx]:'#e2e8f0'}" onclick="event.stopPropagation();toggleDaUser('${u}')">${u}${sel?' ✓':''}</span>`;
+  }).join('');
+}
+function toggleDaUserPicker(){
+  const p = document.getElementById('da_user_picker');
+  p.style.display = (p.style.display==='none'||!p.style.display) ? 'flex' : 'none';
+}
+function toggleDaUser(name){
+  if(daSelectedUsers.includes(name)) daSelectedUsers = daSelectedUsers.filter(u=>u!==name);
+  else daSelectedUsers.push(name);
+  renderDaUserPicker();
+}
+
+function renderDaTypePills(){
+  const el = document.getElementById('da_type_pills');
+  el.innerHTML = DA_TYPES.map(t=>{
+    const tc = DA_TYPE_COLORS[t]||DA_TYPE_COLORS['Other'];
+    const sel = daSelectedTypes.includes(t);
+    return `<span class="da-type-chip" style="background:${sel?tc.bg:'#fff'};color:${sel?tc.text:'#94a3b8'};border-color:${sel?tc.border:'#e2e8f0'}" onclick="toggleDaType('${t}')">${t}${sel?' ✓':''}</span>`;
+  }).join('');
+}
+function toggleDaType(t){
+  if(daSelectedTypes.includes(t)) daSelectedTypes = daSelectedTypes.filter(x=>x!==t);
+  else daSelectedTypes.push(t);
+  renderDaTypePills();
+}
+
+function saveDaCard(){
+  const title = document.getElementById('da_title').value.trim();
+  if(!title){ toast('Please enter a project/sample label'); return; }
+  const existingId = document.getElementById('da_id').value;
+  const stage = document.getElementById('da_stage').value;
+  const existing = existingId ? daCards.find(c=>c.id===parseInt(existingId)) : null;
+  const card = {
+    id: existingId ? parseInt(existingId) : Date.now(),
+    stage,
+    title,
+    assignees: [...daSelectedUsers],
+    types: [...daSelectedTypes],
+    modes: existing ? existing.modes : {pos:{done:false,by:''},neg:{done:false,by:''}},
+    checklist: existing ? existing.checklist : {excel_filtered:false,final_excel:false,ppt_done:false},
+  };
+  if(existingId){ const i=daCards.findIndex(c=>c.id===parseInt(existingId)); if(i>=0) daCards[i]=card; }
+  else daCards.push(card);
+  saveDaCards(); cm('daMov'); toast('Saved ✓'); renderDaBoard();
+}
+
+function delDaCard(id){
+  if(!confirm('Remove this card?')) return;
+  daCards = daCards.filter(c=>c.id!==id);
+  saveDaCards(); toast('Removed'); renderDaBoard();
+}
+
 // ── PROJECT PROGRESS TAB ─────────────────────────────────────────────────
 const PS_STEPS = [
   { id:'protocol', label:'Protocol Dev',     emoji:'📋' },
@@ -3798,6 +4178,77 @@ const PS_STEPS = [
 ];
 
 let psWeekStart = null;
+let psManualIds = []; // project IDs manually pinned to the Progress tab regardless of filter
+
+function loadPsManual(){
+  const s = localStorage.getItem('lcms_ps_manual');
+  if(s){ try{ psManualIds = JSON.parse(s); } catch(e){ psManualIds=[]; } }
+}
+function savePsManual(){
+  localStorage.setItem('lcms_ps_manual', JSON.stringify(psManualIds));
+  if(fbAuth.currentUser) fbSave('ps_manual', psManualIds);
+}
+
+function openPsManualAddModal(){
+  document.getElementById('psManualSearch').value = '';
+  document.getElementById('psManualResults').style.display = 'none';
+  renderPsManualPinnedList();
+  document.getElementById('psManualMov').classList.add('open');
+}
+
+function renderPsManualPinnedList(){
+  const el = document.getElementById('psManualPinned');
+  if(!psManualIds.length){ el.innerHTML = '<em>No manually pinned projects yet.</em>'; return; }
+  const items = psManualIds.map(id=>{
+    const p = (D.projects||[]).find(x=>x.id===id);
+    if(!p) return '';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#f0f6ff;border-radius:8px;margin-bottom:5px">
+      <span><strong style="color:#1F4E79">P${p.project_no}</strong> — ${p.customer||''}</span>
+      <button onclick="psManualRemove(${id})" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:6px;padding:2px 8px;font-size:.7rem;cursor:pointer">Remove</button>
+    </div>`;
+  }).join('');
+  el.innerHTML = `<div style="font-weight:700;color:#475569;margin-bottom:6px">Currently pinned:</div>${items}`;
+}
+
+function psManualSearchProjects(){
+  const q = document.getElementById('psManualSearch').value.toLowerCase().trim();
+  const res = document.getElementById('psManualResults');
+  if(!q){ res.style.display='none'; return; }
+  const matches = (D.projects||[]).filter(p=>
+    String(p.project_no).toLowerCase().includes(q) ||
+    (p.customer||'').toLowerCase().includes(q) ||
+    (p.project_detail||'').toLowerCase().includes(q)
+  ).slice(0,12);
+  if(!matches.length){ res.innerHTML='<div style="padding:10px;color:#94a3b8;font-size:.8rem">No matches</div>'; res.style.display='block'; return; }
+  res.innerHTML = matches.map(p=>{
+    const pinned = psManualIds.includes(p.id);
+    return `<div onclick="${pinned?'':'psManualAdd('+p.id+')'}" style="padding:8px 12px;cursor:${pinned?'default':'pointer'};border-bottom:1px solid #f1f5f9;font-size:.82rem;${pinned?'opacity:.5':''}"
+      onmouseover="if(!${pinned})this.style.background='#f0f6ff'" onmouseout="this.style.background=''">
+      <strong style="color:#1F4E79">P${p.project_no}</strong>
+      <span style="color:#64748b;margin-left:6px">${p.customer||''}</span>
+      <span style="float:right;font-size:.7rem;color:${pinned?'#16a34a':'#94a3b8'}">${pinned?'✓ Pinned':p.method||''}</span>
+    </div>`;
+  }).join('');
+  res.style.display = 'block';
+}
+
+function psManualAdd(projId){
+  if(!psManualIds.includes(projId)) psManualIds.push(projId);
+  savePsManual();
+  document.getElementById('psManualSearch').value = '';
+  document.getElementById('psManualResults').style.display = 'none';
+  renderPsManualPinnedList();
+  renderProjStatus();
+  toast('Project added to Progress view ✓');
+}
+
+function psManualRemove(projId){
+  psManualIds = psManualIds.filter(id=>id!==projId);
+  savePsManual();
+  renderPsManualPinnedList();
+  renderProjStatus();
+  toast('Removed from pinned list');
+}
 let psPopoverCtx = null; // { projectId, stepId }
 
 function psNav(dir){
@@ -3808,21 +4259,49 @@ function psNav(dir){
 }
 function psNavToday(){ ttWeekStart = weekMonday(new Date()); renderProjStatus(); }
 
-// Maps timetable task types → pipeline step IDs
+// Maps timetable task types → pipeline step IDs (must match PS_STEPS ids exactly)
 const TT_TYPE_TO_PS_STEP = {
-  'prep':     'sample_prep',
+  'prep':     'prep',
   // 'acq' intentionally excluded — LC-MS acquisition runs don't need tracking in progress tab
-  'data':     'data_analysis',
-  'revision': 'client_report',
+  'data':     'data',
+  'revision': 'report',
   'method':   'protocol',
 };
-const PS_STEP_ORDER = ['protocol','sample_prep','lc_ms_acq','data_analysis','client_report'];
+const PS_STEP_ORDER = ['protocol','prep','acq','data','report'];
+
+// Visual identity per stage — used for card accents and section grouping
+const PS_STAGE_COLORS = {
+  protocol: {bg:'#f3e8ff', text:'#553c9a', border:'#d8b4fe'},
+  prep:     {bg:'#eef7e8', text:'#375623', border:'#b7d6a0'},
+  acq:      {bg:'#fff1e6', text:'#C55A11', border:'#fbd0a8'},
+  data:     {bg:'#e8f0fb', text:'#1F4E79', border:'#b9d2ee'},
+  report:   {bg:'#f5ecdf', text:'#744210', border:'#e0c9a0'},
+  not_started: {bg:'#f8fafc', text:'#64748b', border:'#e2e8f0'},
+  completed:   {bg:'#dcfce7', text:'#166534', border:'#86efac'},
+};
+
+// Determines which stage group a project currently belongs to
+function psDetermineStage(p){
+  const tl = getTimeline(p.id);
+  const statuses = PS_STEPS.map(s=>(tl.steps[s.id]||{}).status||'pending');
+  const currentIdx = statuses.indexOf('current');
+  if(currentIdx>=0) return PS_STEPS[currentIdx].id;
+  const lastDoneIdx = statuses.lastIndexOf('done');
+  if(lastDoneIdx === PS_STEPS.length-1) return 'completed';
+  if(lastDoneIdx >= 0) return PS_STEPS[lastDoneIdx+1].id; // next step after last done
+  return 'not_started';
+}
 
 function inferTimelineFromTimetable(projId){
   if(!ttTasks || !ttTasks.length) return false;
+  const INSTRUMENT_IDS = TEAM_ROWS.filter(r=>r.type==='instrument').map(r=>r.id); // ['QTOF','TQ']
   // Collect all timetable tasks that reference this project, sorted oldest→newest
-  const projTasks = ttTasks.filter(t=>(Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number).includes(Number(projId)))
-                           .sort((a,b)=>a.date.localeCompare(b.date));
+  // Exclude tasks logged on instrument rows (QTOF/TQ) — those represent machine run scheduling,
+  // not personal stage progress, so they should NOT pull a project into the Progress tab by themselves.
+  const projTasks = ttTasks.filter(t=>
+      (Array.isArray(t.project_ids)?t.project_ids:Object.values(t.project_ids||{})).map(Number).includes(Number(projId))
+      && !INSTRUMENT_IDS.includes(t.person)
+    ).sort((a,b)=>a.date.localeCompare(b.date));
   if(!projTasks.length) return false;
 
   // Collect per-step: who was assigned, latest date seen
@@ -3940,6 +4419,16 @@ function renderProjStatus(){
     projects = (D.projects||[]).filter(p=>!['Project completed','Cancel'].includes(p.work_status) && String(p.year)==='2026');
   }
 
+  // Merge in manually pinned projects (regardless of filter), tagging which ones required pinning
+  const naturalIds = new Set(projects.map(p=>p.id));
+  const pinnedExtra = [];
+  psManualIds.forEach(id=>{
+    if(!naturalIds.has(id)){
+      const p = (D.projects||[]).find(x=>x.id===id);
+      if(p){ projects.push(p); pinnedExtra.push(id); }
+    }
+  });
+
   const grid = document.getElementById('psGrid');
   if(!grid) return;
 
@@ -3947,18 +4436,55 @@ function renderProjStatus(){
     grid.innerHTML = `<div style="text-align:center;padding:40px;color:#94a3b8">
       <div style="font-size:2rem;margin-bottom:8px">📋</div>
       <div style="font-weight:600">${filter==='week'?'No projects linked to timetable tasks this week':'No active projects found'}</div>
-      <div style="font-size:.8rem;margin-top:4px">${filter==='week'?'Make sure timetable tasks have project codes attached (P-tags), or switch to "All active projects"':'No active 2026 projects found in work status'}</div>
+      <div style="font-size:.8rem;margin-top:4px">${filter==='week'?'Make sure timetable tasks have project codes attached (P-tags), or switch to "All active projects"':'No active 2026 projects found in work status'} — or use <strong>+ Add Project</strong> above to add one manually.</div>
     </div>`;
     return;
   }
 
-  grid.innerHTML = projects.map(p => renderPsCard(p)).join('');
+  grid.innerHTML = renderPsGrouped(projects, new Set(pinnedExtra));
 }
 
-function renderPsCard(p){
+const PS_STAGE_LABELS = {
+  protocol:    '📋 Protocol Dev',
+  prep:        '🧪 Sample Prep',
+  acq:         '⚗️ LC-MS Acquisition',
+  data:        '📊 Data Analysis',
+  report:      '📄 Client Report',
+  completed:   '✅ Completed',
+  not_started: '⬜ Not Started',
+};
+const PS_GROUP_ORDER = ['protocol','prep','acq','data','report','completed','not_started'];
+
+function renderPsGrouped(projects, pinnedSet){
+  pinnedSet = pinnedSet || new Set();
+  // Bucket projects by current stage
+  const buckets = {};
+  projects.forEach(p=>{
+    const stage = psDetermineStage(p);
+    if(!buckets[stage]) buckets[stage] = [];
+    buckets[stage].push(p);
+  });
+
+  return PS_GROUP_ORDER.filter(stage=>buckets[stage]&&buckets[stage].length).map(stage=>{
+    const sc = PS_STAGE_COLORS[stage];
+    const items = buckets[stage];
+    return `<div style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:8px 14px;background:${sc.bg};border:1px solid ${sc.border};border-radius:10px">
+        <span style="font-weight:700;font-size:.85rem;color:${sc.text}">${PS_STAGE_LABELS[stage]}</span>
+        <span style="font-size:.72rem;color:${sc.text};opacity:.75;background:rgba(255,255,255,.6);padding:1px 9px;border-radius:10px;font-weight:600">${items.length} project${items.length!==1?'s':''}</span>
+      </div>
+      <div style="background:${sc.bg};border:1px solid ${sc.border};border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:10px">
+        ${items.map(p=>renderPsCard(p, pinnedSet.has(p.id))).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPsCard(p, isPinned){
   const tl = getTimeline(p.id);
   const mc = (typeof WB_METHOD_COLORS!=='undefined'&&WB_METHOD_COLORS[p.method])||{bg:'#f1f5f9',text:'#475569',border:'#e2e8f0'};
   const statusBadge = `<span style="padding:2px 9px;border-radius:10px;font-size:.68rem;font-weight:600;background:#e0f2fe;color:#0369a1">${p.work_status||'—'}</span>`;
+  const pinnedBadge = isPinned ? `<span style="padding:2px 9px;border-radius:10px;font-size:.68rem;font-weight:600;background:#fef9c3;color:#854d0e" title="Manually added — not from timetable/filter">📌 Manual</span>` : '';
 
   // Determine timeline line progress
   const stepStatuses = PS_STEPS.map(s=>(tl.steps[s.id]||{}).status||'pending');
@@ -4004,7 +4530,12 @@ function renderPsCard(p){
       <span class="ps-method-badge" style="background:${mc.bg};color:${mc.text};border:1px solid ${mc.border}">${p.method||'—'}</span>
       <span style="font-size:.72rem;color:#64748b">${p.num_samples||0} samples</span>
       ${statusBadge}
+      ${pinnedBadge}
       <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+        ${isPinned ? `<button onclick="psManualRemove(${p.id})" title="Remove from manually pinned list"
+          style="padding:3px 10px;font-size:.68rem;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;border-radius:8px;cursor:pointer;white-space:nowrap">
+          ✕ Unpin
+        </button>` : ''}
         <button onclick="editProjId(${p.id})" title="Edit project details" class="edit-btn"
           style="padding:3px 10px;font-size:.68rem;background:#f8fafc;color:#475569;border:1px solid #e2e8f0;border-radius:8px;cursor:pointer;white-space:nowrap">
           ✏️ Edit
@@ -4931,7 +5462,10 @@ function renderTimetable(){
 
         return `<span class="tt-chip ${TT_TYPE_CLS[t.type]||'other'}${bgClass}"${methodAttr} ${editAttr} ${dragAttrs} style="position:relative">${typeShort} ${projIds.length?'':t.desc||''}${statBadge}${projTags}</span>`;
       }).join('');
-      if(canAddEdit) chips += `<span class="tt-add-btn" onclick="openTTModal('${row.id}','${ds}')" title="Add task">＋</span>`;
+      if(canAddEdit){
+        chips += `<span class="tt-add-btn" onclick="openTTModal('${row.id}','${ds}')" title="Add task">＋</span>`;
+        chips += `<span class="tt-add-btn" onclick="event.stopPropagation();openCopyDayModal('${row.id}','${ds}')" title="Copy all tasks from this day to another day">📋</span>`;
+      }
 
       const dropAttrs = canAddEdit ? `ondragover="ttDragOver(event)" ondrop="ttDrop(event,'${row.id}','${ds}')" ondragleave="ttDragLeave(event)"` : '';
       html += `<td class="${cellCls}" ${dropAttrs}>${chips}</td>`;
@@ -4971,9 +5505,15 @@ function renderTimetable(){
   // STAT tasks
   const statTasks = weekTasks.filter(t=>t.needs_stat);
 
-  // Per-person count
+  // Per-person count — excludes instrument rows (QTOF/TQ), since those represent
+  // machine run scheduling, not personal workload. Shown separately below instead.
+  const INSTRUMENT_IDS_WK = TEAM_ROWS.filter(r=>r.type==='instrument').map(r=>r.id);
   const byPerson = {};
-  weekTasks.forEach(t=>{ byPerson[t.person]=(byPerson[t.person]||0)+1; });
+  const byInstrument = {};
+  weekTasks.forEach(t=>{
+    if(INSTRUMENT_IDS_WK.includes(t.person)) byInstrument[t.person]=(byInstrument[t.person]||0)+1;
+    else byPerson[t.person]=(byPerson[t.person]||0)+1;
+  });
 
   const TYPE_META = {
     prep:     {label:'Sample Prep',      emoji:'🧪', bg:'#e2f0d9', color:'#375623'},
@@ -5025,12 +5565,19 @@ function renderTimetable(){
       <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:.75rem;color:#b91c1c;font-weight:600">
         🔴 ${statTasks.length} STAT task${statTasks.length>1?'s':''} this week — needs urgent processing
       </div>`:''}
-      <!-- Per-person breakdown -->
+      <!-- Per-person breakdown (staff only) -->
       <div style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">Tasks per person</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:${Object.keys(byInstrument).length?'12px':'0'}">
         ${personRows2||'<span style="color:#94a3b8;font-size:.72rem">—</span>'}
         ${myRow&&myCount?`<span style="font-size:.72rem;background:#1F4E79;color:#fff;padding:2px 8px;border-radius:8px;font-weight:600">👤 Me: ${myCount}</span>`:''}
       </div>
+      ${Object.keys(byInstrument).length?`
+      <div style="font-size:.72rem;font-weight:700;color:#475569;margin-bottom:5px">⚗️ Instrument runs scheduled</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${Object.entries(byInstrument).map(([inst,count])=>
+          `<span style="font-size:.72rem;background:#fff7ed;color:#C55A11;padding:2px 8px;border-radius:8px;border:1px solid #fed7aa"><b>${inst}</b>: ${count} run${count!==1?'s':''}</span>`
+        ).join(' ')}
+      </div>`:''}
     </div>
   </div>`;
 
